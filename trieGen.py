@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import pickle
 import sys
 
@@ -30,14 +32,14 @@ class Node():
         self.children[node.value] = node
 
 
-def genTrie():
+def genTrie(maxWords):
     t = Trie()
 
     longestWord = 0
     with open("words.txt", "r") as f:
         for i,word in enumerate(f):
-            # if i > 1000:
-            #     break
+            if i > maxWords:
+                break
 
             longestWord = max(longestWord, len(word.strip('\n')))
             t.addToTrie(word.strip('\n'))
@@ -60,12 +62,17 @@ def validateTrie():
             print("Trie is INVALID")
 
 
-if (len(sys.argv) == 2):
-    if sys.argv[1] == 'gen':
-        genTrie()
-    elif sys.argv[1] == 'read':
-        t = validateTrie()
-        if t is not None:
-            print("Longest word in trie is: " + str(t.getMaxDepth(t.root)))
+if len(sys.argv) >= 2 and sys.argv[1] == 'gen':
+    numWords = sys.maxsize
+    if len(sys.argv) == 3:
+        numWords = int(sys.argv[2])
+
+    genTrie(numWords)
+
+elif len(sys.argv) == 2 and sys.argv[1] == 'read':
+    t = validateTrie()
+    if t is not None:
+        print("Longest word in trie is: " + str(t.getMaxDepth(t.root)))
+
 else:
     print("Must be 'gen' or 'read'")
