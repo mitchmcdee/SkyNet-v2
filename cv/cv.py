@@ -216,7 +216,9 @@ def temp_files_to_letters(num_of_letters):
     for i in range(num_of_letters):
         letter = pytesseract.image_to_string(Image.open(str(i) + '-temp.png'), config='-psm 10')
         if letter == '.':
-            letter = 'P'
+            letter = "P"
+        if letter == 'p':
+            letter = "P"
         letters.append(letter)
     return letters
 
@@ -242,11 +244,8 @@ def picture_to_state(filename_str):
 
     logging.debug(box_coords)
     midpoints = midpoint_of_box(box_coords)
-    print("letters: " + str("".join(letters)))
-    print("box coords: " + str(midpoints))
-    print("word lengths: " + str(wordlengths))
+    return (letters, midpoints, wordlengths)
 expected = [["POST",[4]],["LSELIDLOD",[5,4]],["LSELIDLOD",[5,4,3,3]],["",[4]],["",[4]]]
-
 def test_easy():
     picture_to_state("wordbrain1.jpg")
     for i in range(2,17):
@@ -256,6 +255,6 @@ def test_medium():
         picture_to_state("wordbrain" + str(i) + ".jpg")
 def test_hard():
     pass
-picture_to_state("wordbrain17.jpg")
+picture_to_state("wordbrain18.jpg")
 
 # Load an color image in grayscale
