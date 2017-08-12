@@ -45,11 +45,10 @@ def quit(reason):
 
 
 def solveState(state, currentPath, wordLengths):
-    logger.debug("Solving " + str(state.state))
+    # logger.debug("Solving " + str(state.state))
 
     if len(wordLengths) == 0:
-        print("Success!", currentPath)
-        return
+        return [currentPath]
 
     validPaths = []
     for r in state.getPathRoots():
@@ -57,12 +56,14 @@ def solveState(state, currentPath, wordLengths):
         (validPaths.extend(paths) if paths is not None else None)
 
     if len(validPaths) == 0:
-        print("Failure!")
-        return
+        return None
 
-    for path in sorted(validPaths, key=lambda x: len(x), reverse=True):
-        logger.debug("Removed " + state.getWordFromPath(path))
-        solveState(state.getRemovedWordState(path), currentPath + [path], wordLengths[1:])
+    solvedStates = []
+    for path in sorted(validPaths, key=lambda x: len(x)):
+        rv = solveState(state.getRemovedWordState(path), currentPath + [path], wordLengths[1:])
+        (solvedStates.extend(rv) if rv is not None else None)
+
+    return solvedStates
 
 
 logger.debug('Checking words.pickle exists')
@@ -76,4 +77,4 @@ with open('words.pickle', 'rb') as f:
 if t is None:
     quit('There was a problem loading in the pickle file')
 
-solveState(TEST_STATE, [], TEST_WORD_LENS)
+print(solveState(TEST_STATE, [], TEST_WORD_LENS))
