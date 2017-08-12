@@ -1,5 +1,6 @@
 import sys
 from math import sqrt
+from copy import deepcopy
 
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
@@ -47,7 +48,7 @@ class State():
         for i,_ in enumerate(self.state):
             if v == '_':
                 continue
-                
+
             root = StateNode(i, self.state[i], None)
             stack = [root]
             visited = set()
@@ -94,6 +95,19 @@ class State():
 
         return roots
 
+
+    def getWordFromPath(self, path):
+        return ('').join([self.state[i] for i in path])
+
+
+    def getRemovedWordState(self, path):
+        newState = deepcopy(self.state)
+
+        # Replace path with underscores (i.e. empty space)
+        for i in path:
+            newState[i] = '_'
+
+        return newState
 
 
 class StateNode():

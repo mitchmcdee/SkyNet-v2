@@ -26,12 +26,26 @@ logger.addHandler(ch)
 # Trie Searching #
 ##################
 
+TEST_STATE = State(['a', 'b', 'l', 'q', 'e', 'q', 'q', 'q', 'q'])
+TEST_WORD_LENS = [1]
+
+
 def quit(reason):
     logger.critical(reason)
     sys.exit(0)
 
-TEST_STATE = State(['a', 'b', 'l', 'e'])
-TEST_WORD_LENS = [1]
+
+def solveState(state):
+    longestPaths = [r.getLongestPath() for r in state.getRoots() if t.isWord(TEST_STATE.getWordFromPath(r.getLongestPath()))]
+    
+    if len(longestPaths) == 0:
+        print("NO GOODIES FOR YA")
+        return
+
+    for path in longestPaths:
+        print(path)
+        print(state.getRemovedWordState(path))
+
 
 logger.debug('Checking words.pickle exists')
 if os.path.exists('words.pickle') is not True:
@@ -48,12 +62,7 @@ if t is None:
 # for word in sorted(TEST_STATE.getWords(), key=lambda x: len(x), reverse=True):
 #     logger.debug(('').join(word) + ": " + str(t.isWord(word)))
 
-logger.debug('Generating word list')
-for root in TEST_STATE.getRoots():
-    path = root.getLongestPath()
-    word = root.getLongestWord()
-
-    print(word, path)
-
+logger.debug('Solving state')
+solveState(TEST_STATE)
 
 

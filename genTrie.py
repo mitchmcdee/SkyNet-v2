@@ -23,7 +23,7 @@ logger.addHandler(ch)
 # Trie Generating #
 ###################
 
-MINWORDSIZE = 3
+MINWORDSIZE = 2
 
 def genTrie(maxWords):
     t = Trie()
