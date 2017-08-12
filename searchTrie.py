@@ -40,6 +40,12 @@ logger.addHandler(ch)
 TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'])
 TEST_WORD_LENS = [6, 5, 5]
 
+# TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'])
+# TEST_WORD_LENS = [8,4,4]
+
+# TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'])
+# TEST_WORD_LENS = [5, 3, 3, 8, 6]
+
 
 def quit(reason):
     logger.critical(reason)
@@ -50,13 +56,19 @@ def solveState(state, currentPath, wordLengths):
     # logger.debug("Solving " + str(state.state))
 
     if len(wordLengths) == 0:
-        return [currentPath]
+        if len(sum(currentPath, [])) == state.sideLength * state.sideLength:
+            return [currentPath]
+        return None
 
     validPaths = []
     for i in range(len(wordLengths)):
         for r in state.getValidPathRoots(t):
             paths = r.getValidPaths(t, state, wordLengths[i])
-            (validPaths.extend(paths) if paths is not None else None)
+
+            if paths is None:
+                continue
+
+            validPaths.extend(paths)
 
     if len(validPaths) == 0:
         return None
@@ -65,9 +77,14 @@ def solveState(state, currentPath, wordLengths):
     for i in range(len(wordLengths)):
         for path in sorted(validPaths, key=lambda x: len(x)):
             rv = solveState(state.getRemovedWordState(path), currentPath + [path], wordLengths[:i] + wordLengths[i+1:])
-            (solvedStates.extend(rv) if rv is not None else None)
 
-    return solvedStates
+            if rv is None:
+                continue
+
+            solvedStates.extend(rv)
+
+    # Ignore this lol. Removes all duplicate solutions
+    return list(set(tuple([tuple(map(tuple, s)) for s in solvedStates])))
 
 
 logger.debug('Checking words.pickle exists')
@@ -81,5 +98,4 @@ with open('words.pickle', 'rb') as f:
 if t is None:
     quit('There was a problem loading in the pickle file')
 
-print("Starting to solve")
 print(solveState(TEST_STATE, [], TEST_WORD_LENS))

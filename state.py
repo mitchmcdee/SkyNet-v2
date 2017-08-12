@@ -87,19 +87,20 @@ class State():
             newState.state[i] = '_'
 
         # If tiles need to be dropped down, do so
-        for i,v in enumerate(newState.state):
-            if v != '_':
+        for i in range(len(newState.state)):
+            if newState.state[i] != '_':
                 continue
 
-            # Check above cell is valid and not an underscore
+            # swap cells all the way up
             aboveCellIndex = i - self.sideLength
-            if aboveCellIndex < 0 or newState.state[aboveCellIndex] == '_':
-                continue
+            while aboveCellIndex >= 0:
 
-            # Swap tiles
-            temp = v
-            newState.state[i] = newState.state[aboveCellIndex]
-            newState.state[aboveCellIndex] = temp
+                temp = newState.state[i]
+                newState.state[i] = newState.state[aboveCellIndex]
+                newState.state[aboveCellIndex] = temp
+
+                aboveCellIndex -= self.sideLength
+                i -= self.sideLength
 
         return newState
 
