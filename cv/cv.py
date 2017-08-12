@@ -7,23 +7,42 @@ BG_VALUE = 27
 THRESHOLD = 100
 MAX = 255
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
 def calc_edges_h(image, start_index, end_index, offset):
     box_coords = []
     black_flag = True
     box_size = [0,0]
+    white_count = 0
+    start_flag = False
+    black_seq_count = 0
     for i in range(start_index, end_index):
         logging.debug(image[i,offset])
-        if image[i,offset] > 50 and black_flag:
-            black_flag = False
-            box_size[0] = i
-        elif image[i,offset] < 50 and not black_flag:
-            black_flag = True
-            box_size[1] = i
-            box_coords.append(box_size)
-            box_size = [0,0]
+        if image[i,offset] > 50:
+            if black_flag:
+                black_flag = False
+                box_size[0] = i
+            white_count += 1
+            start_flag = True
+            black_seq_count = 0
+        elif image[i,offset] < 50:
+            if black_flag == False:
+                black_flag = True
+                box_size[1] = i
+                box_coords.append(box_size)
+                box_size = [0,0]
+            if start_flag:
+                black_seq_count += 1
+                logging.debug("black count: " + str(black_seq_count))
+                if (black_seq_count > 40):
+                    logging.debug("Assuming end of grid. Finished")
+                    break
     logging.info("height coords: " + str(box_coords))
+    logging.debug(("White count: " + str(white_count)))
+    logging.debug("Total count: " + str((end_index - start_index)))
+    if white_count < ((end_index - start_index)*0.5):
+        # Assume this search failed as there wasn't enough white (boxes)
+        return None
     return box_coords
 
 
@@ -44,10 +63,17 @@ def calc_edges_w(image, start_index, end_index, offset):
     logging.info("width coords: " + str(box_coords))
     return box_coords
 
-def calc_box_coords(image, width,height,horizontal_offset):
+def calc_box_coords(image, width,height):
     start_index = int(height * 0.15)
     end_index = int(height * 0.85)
+    horizontal_offset = 20
     box_coords_h = calc_edges_h(image, start_index, end_index,horizontal_offset)
+    while box_coords_h == None:
+        # If boxes can't be found with inital offset, increase the offset until they're found
+        horizontal_offset += 5
+        box_coords_h = calc_edges_h(image, start_index, end_index,horizontal_offset)
+    logging.debug(box_coords_h)
+    logging.debug(len(box_coords_h))
     vertical_offset = box_coords_h[0][0] + 20 # first height coord in grid
     logging.info("Vertical offset of grid: " + str(vertical_offset))
     start_index = 0
@@ -183,7 +209,7 @@ def midpoint_of_box(box_coords):
 def save_each_letter(box_coords, image):
     for index, box in enumerate(box_coords):
         crop = image[box[0][1]:box[1][1],box[0][0]:box[1][0]]
-        thresh, dst = cv2.threshold(crop, THRESHOLD, MAX, cv2.THRESH_BINARY);
+        thresh, dst = cv2.threshold(crop, THRESHOLD, MAX, cv2.THRESH_BINARY)
         cv2.imwrite(str(index) + '-temp.png',dst)
 def temp_files_to_letters(num_of_letters):
     letters = []
@@ -199,8 +225,9 @@ def picture_to_state(filename_str):
     height, width = img.shape
     logging.info("Height: " + str(height))
     logging.info("Width: " + str(width))
-
-    box_coords = calc_box_coords(img,width,height,20)
+    box_coords = calc_box_coords(img,width,height)
+    print(str(box_coords))
+    print(str(len(box_coords)))
     save_each_letter(box_coords,img)
     letters = temp_files_to_letters(len(box_coords))
     logging.info(letters)
