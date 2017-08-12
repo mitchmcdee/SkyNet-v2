@@ -26,7 +26,7 @@ logger.addHandler(ch)
 # Trie Searching #
 ##################
 
-TEST_STATE = State(['a', 'b', 'l', 'q', 'e', 'q', 'q', 'q', 'q'])
+TEST_STATE = State(['q', 'q', 'q', 'a', 'b', 'l', 'q', 'e', 'q'])
 TEST_WORD_LENS = [1]
 
 
@@ -46,8 +46,9 @@ def solveState(state):
         return
 
     for path in longestPaths:
-        print(path)
-        # print(state.getRemovedWordState(path))
+        print()
+        state.getRemovedWordState(path).printState()
+        print()
 
 
 logger.debug('Checking words.pickle exists')
@@ -64,8 +65,7 @@ if t is None:
 logger.debug('Solving state')
 
 print()
-for i in range(TEST_STATE.sideLength):
-    print(TEST_STATE.state[i*TEST_STATE.sideLength:TEST_STATE.sideLength+i*TEST_STATE.sideLength])
+TEST_STATE.printState()
 print()
 
 solveState(TEST_STATE)

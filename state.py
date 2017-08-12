@@ -74,13 +74,18 @@ class State():
 
 
     def getRemovedWordState(self, path):
-        newState = deepcopy(self.state)
+        newState = deepcopy(self)
 
         # Replace path with underscores (i.e. empty space)
         for i in path:
-            newState[i] = '_'
+            newState.state[i] = '_'
 
         return newState
+
+    def printState(self):
+        for i in range(self.sideLength):
+            multiplier = i * self.sideLength
+            print(self.state[multiplier : self.sideLength + multiplier])
 
 
 class StateNode():
