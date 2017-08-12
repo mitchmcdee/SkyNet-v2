@@ -1,38 +1,61 @@
 #!/usr/bin/python3
 
 import pickle
+import logging
 import sys
 import os
 from trie import Trie, TrieNode
 from state import State, StateNode
-from queue import Queue
+
+#################
+# Logging Setup #
+#################
+
+# Setup logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Additionally log to stdout
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+
+##################
+# Trie Searching #
+##################
 
 state = State(['a', 'b', 'l', 'e'])
 words = [1]
 
-if os.path.exists('words.pickle') is not True:
-    print('Must first generate a trie (words.pickle) to search')
+def quit(reason):
+    logger.critical(reason)
     sys.exit(0)
 
+logger.debug('Checking words.pickle exists')
+if os.path.exists('words.pickle') is not True:
+    quit('Could not find words.pickle')
+logger.debug('Found words.pickle')
+
+logger.debug('Loading in words.pickle trie')
 with open('words.pickle', 'rb') as f:
     t = pickle.load(f)
 
 if t is None:
-    print('There was a problem loading in the pickle file')
-    sys.exit(0)
+    quit('There was a problem loading in the pickle file')
 
+logger.debug('Generating word list')
 words = []
 for i,_ in enumerate(state.state):
 
     root = StateNode(i, state.state[i], None)
-    queue = Queue()
+    stack = [root]
     visited = set()
-    queue.put(root)
 
-    print("Searching down " + root.value)
-
-    while not queue.empty():
-        current = queue.get()
+    while len(stack) != 0:
+        current = stack.pop()
 
         for c in state.getChildrenFromPoint(current.index):
             if current.hasParent(c):
@@ -40,11 +63,16 @@ for i,_ in enumerate(state.state):
 
             child = StateNode(c, state.state[c], current)
             current.addChild(child)
-            queue.put(child)
+            stack.append(child)
 
     words.extend(root.getWords())
 
-print(words)
+logger.debug("Checking valid words")
+for word in words:
+    isWord = ('').join(word) + ' is '
+    isWord += 'NOT ' if not t.isWord(word) else ''
+    isWord += 'a word'
+    logger.debug(isWord)
 
 
 

@@ -8,7 +8,7 @@ def genTrie(maxWords):
     t = Trie()
 
     longestWord = 0
-    with open("words.txt", "r") as f:
+    with open("words2.txt", "r") as f:
         for i,word in enumerate(f):
             if i > maxWords:
                 break

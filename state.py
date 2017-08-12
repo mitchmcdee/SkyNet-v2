@@ -46,7 +46,6 @@ class StateNode():
 
     def hasParent(self, parentIndex):
         head = self
-
         while head is not None:
             if head.index == parentIndex:
                 return True
