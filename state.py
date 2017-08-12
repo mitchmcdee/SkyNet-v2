@@ -42,34 +42,7 @@ class State():
         return children
 
 
-    def getWords(self):
-        words = []
-
-        for i,_ in enumerate(self.state):
-            if v == '_':
-                continue
-
-            root = StateNode(i, self.state[i], None)
-            stack = [root]
-            visited = set()
-
-            while len(stack) != 0:
-                current = stack.pop()
-
-                for c in self.getChildrenFromPoint(current.index):
-                    if current.hasParent(c):
-                        continue
-
-                    child = StateNode(c, self.state[c], current)
-                    current.addChild(child)
-                    stack.append(child)
-
-            words.extend(root.getWords())
-
-        return words
-
-
-    def getRoots(self):
+    def getPathRoots(self):
         roots = []
 
         for i,v in enumerate(self.state):
@@ -139,14 +112,6 @@ class StateNode():
             printChildren(child)
 
 
-    def getWords(self):
-        words = [[self.value]]
-        for child in self.children.values():
-            words.extend([[self.value] + child for child in child.getWords()])
-    
-        return words
-
-
     def getPaths(self):
         paths = [[self.index]]
         for child in self.children.values():
@@ -155,9 +120,10 @@ class StateNode():
         return paths
 
 
-    def getLongestWord(self):
-        return max(self.getWords(), key=len)
+    def getLongestValidPath(self, state, trie):
+        validPaths = list(filter(lambda x: trie.isWord(state.getWordFromPath(x)), self.getPaths()))
+        if len(validPaths) == 0:
+            return None
 
+        return max(validPaths, key=len)
 
-    def getLongestPath(self):
-        return max(self.getPaths(), key=len)

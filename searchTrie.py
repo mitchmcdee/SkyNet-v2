@@ -36,15 +36,18 @@ def quit(reason):
 
 
 def solveState(state):
-    longestPaths = [r.getLongestPath() for r in state.getRoots() if t.isWord(TEST_STATE.getWordFromPath(r.getLongestPath()))]
-    
+    longestPaths = []
+    for r in state.getPathRoots():
+        longestPath = r.getLongestValidPath(state, t)
+        (longestPaths.append(longestPath) if longestPath is not None else None)
+
     if len(longestPaths) == 0:
         print("NO GOODIES FOR YA")
         return
 
     for path in longestPaths:
         print(path)
-        print(state.getRemovedWordState(path))
+        # print(state.getRemovedWordState(path))
 
 
 logger.debug('Checking words.pickle exists')
@@ -58,11 +61,13 @@ with open('words.pickle', 'rb') as f:
 if t is None:
     quit('There was a problem loading in the pickle file')
 
-# logger.debug('Checking valid words')
-# for word in sorted(TEST_STATE.getWords(), key=lambda x: len(x), reverse=True):
-#     logger.debug(('').join(word) + ": " + str(t.isWord(word)))
-
 logger.debug('Solving state')
+
+print()
+for i in range(TEST_STATE.sideLength):
+    print(TEST_STATE.state[i*TEST_STATE.sideLength:TEST_STATE.sideLength+i*TEST_STATE.sideLength])
+print()
+
 solveState(TEST_STATE)
 
 
