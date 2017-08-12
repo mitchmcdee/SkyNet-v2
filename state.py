@@ -24,6 +24,7 @@ class State():
 
     def getChildrenFromPoint(self, pointIndex):
         children = []
+
         for child in directions:
             childX = pointIndex % self.sideLength + child[0]
             childY = pointIndex // self.sideLength + child[1]
@@ -49,18 +50,19 @@ class State():
             if v == '_':
                 continue
 
-            root = StateNode(i, self.state[i], None)
+            root = StateNode(i, self.state[i], {})
             stack = [root]
-            visited = set()
 
             while len(stack) != 0:
                 current = stack.pop()
 
-                for c in self.getChildrenFromPoint(current.index):
-                    if current.hasParent(c):
+                for childIndex in self.getChildrenFromPoint(current.index):
+                    if childIndex in current.parents:
                         continue
 
-                    child = StateNode(c, self.state[c], current)
+                    print(current.parents, childIndex in current.parents)
+                    child = StateNode(childIndex, self.state[childIndex], deepcopy(current.parents))
+                    child.addParent(current)
                     current.addChild(child)
                     stack.append(child)
 
@@ -80,7 +82,23 @@ class State():
         for i in path:
             newState.state[i] = '_'
 
+        # If tiles need to be dropped down, do so
+        for i,v in enumerate(newState.state):
+            if v != '_':
+                continue
+
+            # Check above cell is valid and not an underscore
+            aboveCellIndex = i - self.sideLength
+            if aboveCellIndex < 0 or newState.state[aboveCellIndex] == '_':
+                continue
+
+            # Swap tiles
+            temp = v
+            newState.state[i] = newState.state[aboveCellIndex]
+            newState.state[aboveCellIndex] = temp
+
         return newState
+
 
     def printState(self):
         for i in range(self.sideLength):
@@ -89,10 +107,10 @@ class State():
 
 
 class StateNode():
-    def __init__(self, index, value, parent):
+    def __init__(self, index, value, parents):
         self.index = index
         self.value = value
-        self.parent = parent
+        self.parents = parents
         self.children = {}
 
 
@@ -100,15 +118,8 @@ class StateNode():
         self.children[child.index] = child
 
 
-    def hasParent(self, parentIndex):
-        head = self
-        while head is not None:
-            if head.index == parentIndex:
-                return True
-
-            head = head.parent
-
-        return False
+    def addParent(self, parent):
+        self.parents[parent.index] = None
 
 
     def printChildren(self):
@@ -117,6 +128,7 @@ class StateNode():
             printChildren(child)
 
 
+    # optimise this?
     def getPaths(self):
         paths = [[self.index]]
         for child in self.children.values():
@@ -125,10 +137,18 @@ class StateNode():
         return paths
 
 
-    def getLongestValidPath(self, state, trie):
-        validPaths = list(filter(lambda x: trie.isWord(state.getWordFromPath(x)), self.getPaths()))
+    def getValidPaths(self, trie, state, wordLength):
+        print(self.getPaths())
+
+        validLengths = list(filter(lambda x: len(x) == wordLength, self.getPaths()))
+        if len(validLengths) == 0:
+            return None
+
+        print(validLengths)
+
+        validPaths = list(filter(lambda x: trie.isWord(state.getWordFromPath(x)), validLengths))
         if len(validPaths) == 0:
             return None
 
-        return max(validPaths, key=len)
+        return validPaths
 

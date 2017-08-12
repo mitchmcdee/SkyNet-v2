@@ -1,3 +1,5 @@
+*.idea
+*.prof
 *.pyc
 __pycache__/
 *.pickle
