@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import logging
 import pickle
 import sys
@@ -31,7 +29,6 @@ def genTrie(maxWords):
     t = Trie()
 
     numWords = 0
-    longestWord = ''
     with open("words.txt", "r") as f:
         for i,w in enumerate(f):
             word = w.strip('\n')
@@ -39,16 +36,12 @@ def genTrie(maxWords):
             if len(word) < MINWORDSIZE:
                 continue
 
-            if i > maxWords:
-                break
-
-            if len(longestWord) != max(len(longestWord), len(word)):
-                longestWord = word
-
-            numWords += 1
             t.addToTrie(word)
 
-    logger.debug("Longest word is '" + longestWord + "'' with length " + str(len(longestWord)))
+            numWords += 1
+            if numWords >= maxWords:
+                break
+
     logger.debug("Total number of words is: " + str(numWords))
 
     with open('words.pickle', 'wb') as f:

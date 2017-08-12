@@ -13,7 +13,7 @@ class State():
             sys.exit(0)
 
         # Check all chars are valid
-        if not all([str(c).isalpha() for c in state]):
+        if not all([str(c).isalpha() or c == '_' for c in state]):
             print("Input contains illegal chars")
             sys.exit(0)
 
@@ -31,6 +31,11 @@ class State():
                 continue
 
             childIndex = childX + childY * self.sideLength
+
+            # Skip over children which are underscores (i.e. empty space)
+            if self.state[childIndex] == '_':
+                continue
+
             children.append(childIndex)
 
         return children
@@ -40,6 +45,9 @@ class State():
         words = []
 
         for i,_ in enumerate(self.state):
+            if v == '_':
+                continue
+                
             root = StateNode(i, self.state[i], None)
             stack = [root]
             visited = set()
@@ -58,6 +66,34 @@ class State():
             words.extend(root.getWords())
 
         return words
+
+
+    def getRoots(self):
+        roots = []
+
+        for i,v in enumerate(self.state):
+            if v == '_':
+                continue
+
+            root = StateNode(i, self.state[i], None)
+            stack = [root]
+            visited = set()
+
+            while len(stack) != 0:
+                current = stack.pop()
+
+                for c in self.getChildrenFromPoint(current.index):
+                    if current.hasParent(c):
+                        continue
+
+                    child = StateNode(c, self.state[c], current)
+                    current.addChild(child)
+                    stack.append(child)
+
+            roots.append(root)
+
+        return roots
+
 
 
 class StateNode():
@@ -90,8 +126,24 @@ class StateNode():
 
 
     def getWords(self):
-        paths = [[self.value]]
+        words = [[self.value]]
         for child in self.children.values():
-            paths.extend([[self.value] + child for child in child.getWords()])
+            words.extend([[self.value] + child for child in child.getWords()])
+    
+        return words
+
+
+    def getPaths(self):
+        paths = [[self.index]]
+        for child in self.children.values():
+            paths.extend([[self.index] + child for child in child.getPaths()])
     
         return paths
+
+
+    def getLongestWord(self):
+        return max(self.getWords(), key=len)
+
+
+    def getLongestPath(self):
+        return max(self.getPaths(), key=len)

@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import pickle
 import logging
 import sys
@@ -46,12 +44,16 @@ with open('words.pickle', 'rb') as f:
 if t is None:
     quit('There was a problem loading in the pickle file')
 
-logger.debug('Generating word list')
-words = TEST_STATE.getWords()
+# logger.debug('Checking valid words')
+# for word in sorted(TEST_STATE.getWords(), key=lambda x: len(x), reverse=True):
+#     logger.debug(('').join(word) + ": " + str(t.isWord(word)))
 
-logger.debug('Checking valid words')
-for word in sorted(words, key=lambda x: len(x), reverse=True):
-    logger.debug(('').join(word) + ": " + str(t.isWord(word)))
+logger.debug('Generating word list')
+for root in TEST_STATE.getRoots():
+    path = root.getLongestPath()
+    word = root.getLongestWord()
+
+    print(word, path)
 
 
 
