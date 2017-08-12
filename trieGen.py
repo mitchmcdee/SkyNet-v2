@@ -35,10 +35,7 @@ def validateTrie():
 
 
 if len(sys.argv) >= 2 and sys.argv[1] == 'gen':
-    numWords = sys.maxsize
-    if len(sys.argv) == 3:
-        numWords = int(sys.argv[2])
-
+    numWords = int(sys.argv[2]) if (len(sys.argv) == 3) else sys.maxsize
     genTrie(numWords)
 
 elif len(sys.argv) == 2 and sys.argv[1] == 'read':
