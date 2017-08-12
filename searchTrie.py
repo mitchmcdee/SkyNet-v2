@@ -28,23 +28,13 @@ logger.addHandler(ch)
 ##################
 
 
-# TEST_STATE = State(['a','b','l','e'])
-# TEST_WORD_LENS = [4]
-
-# TEST_STATE = State(['e','s','t','g','i','e','g','n','n'])
-# TEST_WORD_LENS = [6, 3]
-
-# TEST_STATE = State(['e','g','g','t','e','n','s','i','n'])
-# TEST_WORD_LENS = [6, 3]
-
-# TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'])
-# TEST_WORD_LENS = [6, 5, 5]
-
-# TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'])
-# TEST_WORD_LENS = [8,4,4]
-
-TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'])
-TEST_WORD_LENS = [5, 3, 3, 8, 6]
+# TEST_STATE = State(['a','b','l','e'], [4])
+# TEST_STATE = State(['e','s','t','g','i','e','g','n','n'], [6, 3])
+# TEST_STATE = State(['e','g','g','t','e','n','s','i','n'], [6, 3])
+# TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6, 5, 5])
+# TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4])
+TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5, 3, 3, 8, 6])
+# TEST_STATE = State(['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,8,6,7,5,5])
 
 
 def quit(reason):
@@ -52,17 +42,15 @@ def quit(reason):
     sys.exit(0)
 
 
-def solveState(state, currentPath, wordLengths):
+def solveState(state, currentPath=[]):
     # logger.debug("Solving " + str(state.state))
 
-    if len(wordLengths) == 0:
-        if len(sum(currentPath, [])) == state.sideLength * state.sideLength:
-            return [currentPath]
-        return None
+    if len(state.wordLengths) == 0:
+        return [currentPath] if len(sum(currentPath, [])) == len(state.state) else None
 
     validPaths = []
     for r in state.getValidPathRoots(t):
-        paths = r.getValidPaths(t, state, wordLengths)
+        paths = r.getValidPaths(t, state)
 
         if paths is None:
             continue
@@ -73,15 +61,8 @@ def solveState(state, currentPath, wordLengths):
         return None
 
     solvedStates = []
-    for path in sorted(validPaths, key=lambda x: len(x)):
-        # TODO(mitch): THIS IS WRONG!! You don't need to iterate over wordlengths,
-        # just remove the length of one in the valid path!! :)
-        # and we have that information!
-
-        shorterWordLengths = deepcopy(wordLengths)
-        shorterWordLengths.remove(len(path))
-
-        rv = solveState(state.getRemovedWordState(path), currentPath + [path], shorterWordLengths)
+    for path in validPaths:
+        rv = solveState(state.getRemovedWordState(path), currentPath + [path])
 
         if rv is None:
             continue
@@ -103,4 +84,4 @@ with open('words.pickle', 'rb') as f:
 if t is None:
     quit('There was a problem loading in the pickle file')
 
-print(solveState(TEST_STATE, [], TEST_WORD_LENS))
+print(solveState(TEST_STATE))

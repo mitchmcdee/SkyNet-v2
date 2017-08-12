@@ -5,7 +5,7 @@ from copy import deepcopy
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
 class State():
-    def __init__(self, state):
+    def __init__(self, state, wordLengths):
         sideLength = sqrt(len(state))
 
         # Check input state is a perfect square
@@ -18,8 +18,15 @@ class State():
             print("Input contains illegal chars")
             sys.exit(0)
 
+        # Check word lengths are valid
+        if len(state) != sum(wordLengths):
+            print("Input contains invalid word lengths")
+            sys.exit(0)
+
+
         self.state = state
         self.sideLength = int(sideLength)
+        self.wordLengths = wordLengths
 
 
     def getChildrenFromPoint(self, pointIndex):
@@ -82,6 +89,7 @@ class State():
     def getRemovedWordState(self, path):
         newState = deepcopy(self)
 
+
         # Replace path with underscores (i.e. empty space)
         for i in path:
             newState.state[i] = '_'
@@ -102,6 +110,9 @@ class State():
                 aboveCellIndex -= self.sideLength
                 i -= self.sideLength
 
+        # Remove word length of word that was removed
+        newState.wordLengths.remove(len(path))
+        
         return newState
 
 
@@ -143,8 +154,8 @@ class StateNode():
         return paths
 
 
-    def getValidPaths(self, trie, state, wordLengths):
-        validLengths = list(filter(lambda x: len(x) in wordLengths, self.getPaths()))
+    def getValidPaths(self, trie, state):
+        validLengths = list(filter(lambda x: len(x) in state.wordLengths, self.getPaths()))
         if len(validLengths) == 0:
             return None
 

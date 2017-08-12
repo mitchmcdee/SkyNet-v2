@@ -319,6 +319,12 @@ shoelace
 shoes
 shout
 shovel
+butter
+iceberg
+shower
+lighter
+large
+brick
 sickle
 sickle
 sink
