@@ -2,35 +2,7 @@
 
 import pickle
 import sys
-
-class Trie():
-    def __init__(self):
-        self.root = Node('_', 0)
-
-    def addToTrie(self, string):
-        head = self.root
-        for char in string:
-            if char not in head.children:
-                head.addChild(Node(char, head.depth + 1))
-            head = head.children[char]
-
-    def getMaxDepth(self, head):
-        maxDepth = head.depth
-        for child in head.children.values():
-            maxDepth = max(maxDepth, self.getMaxDepth(child))
-
-        return maxDepth
-
-
-class Node():
-    def __init__(self, value, depth):
-        self.value = value
-        self.depth = depth
-        self.children = {}
-        
-    def addChild(self, node):
-        self.children[node.value] = node
-
+from trie import Trie, TrieNode
 
 def genTrie(maxWords):
     t = Trie()
@@ -72,7 +44,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == 'gen':
 elif len(sys.argv) == 2 and sys.argv[1] == 'read':
     t = validateTrie()
     if t is not None:
-        print("Longest word in trie is: " + str(t.getMaxDepth(t.root)))
+        print("Longest word length in trie is: " + str(t.getMaxDepth(t.root)))
 
 else:
     print("Must be 'gen' or 'read'")
