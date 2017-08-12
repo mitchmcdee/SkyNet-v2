@@ -60,7 +60,6 @@ class State():
                     if childIndex in current.parents:
                         continue
 
-                    print(current.parents, childIndex in current.parents)
                     child = StateNode(childIndex, self.state[childIndex], deepcopy(current.parents))
                     child.addParent(current)
                     current.addChild(child)
@@ -138,13 +137,9 @@ class StateNode():
 
 
     def getValidPaths(self, trie, state, wordLength):
-        print(self.getPaths())
-
         validLengths = list(filter(lambda x: len(x) == wordLength, self.getPaths()))
         if len(validLengths) == 0:
             return None
-
-        print(validLengths)
 
         validPaths = list(filter(lambda x: trie.isWord(state.getWordFromPath(x)), validLengths))
         if len(validPaths) == 0:
