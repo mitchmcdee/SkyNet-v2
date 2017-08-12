@@ -1,5 +1,6 @@
 import sys
 from math import sqrt
+from copy import deepcopy
 
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
@@ -13,7 +14,7 @@ class State():
             sys.exit(0)
 
         # Check all chars are valid
-        if not all([str(c).isalpha() for c in state]):
+        if not all([str(c).isalpha() or c == '_' for c in state]):
             print("Input contains illegal chars")
             sys.exit(0)
 
@@ -31,15 +32,23 @@ class State():
                 continue
 
             childIndex = childX + childY * self.sideLength
+
+            # Skip over children which are underscores (i.e. empty space)
+            if self.state[childIndex] == '_':
+                continue
+
             children.append(childIndex)
 
         return children
 
 
-    def getWords(self):
-        words = []
+    def getPathRoots(self):
+        roots = []
 
-        for i,_ in enumerate(self.state):
+        for i,v in enumerate(self.state):
+            if v == '_':
+                continue
+
             root = StateNode(i, self.state[i], None)
             stack = [root]
             visited = set()
@@ -55,9 +64,28 @@ class State():
                     current.addChild(child)
                     stack.append(child)
 
-            words.extend(root.getWords())
+            roots.append(root)
 
-        return words
+        return roots
+
+
+    def getWordFromPath(self, path):
+        return ('').join([self.state[i] for i in path])
+
+
+    def getRemovedWordState(self, path):
+        newState = deepcopy(self)
+
+        # Replace path with underscores (i.e. empty space)
+        for i in path:
+            newState.state[i] = '_'
+
+        return newState
+
+    def printState(self):
+        for i in range(self.sideLength):
+            multiplier = i * self.sideLength
+            print(self.state[multiplier : self.sideLength + multiplier])
 
 
 class StateNode():
@@ -89,9 +117,18 @@ class StateNode():
             printChildren(child)
 
 
-    def getWords(self):
-        paths = [[self.value]]
+    def getPaths(self):
+        paths = [[self.index]]
         for child in self.children.values():
-            paths.extend([[self.value] + child for child in child.getWords()])
+            paths.extend([[self.index] + child for child in child.getPaths()])
     
         return paths
+
+
+    def getLongestValidPath(self, state, trie):
+        validPaths = list(filter(lambda x: trie.isWord(state.getWordFromPath(x)), self.getPaths()))
+        if len(validPaths) == 0:
+            return None
+
+        return max(validPaths, key=len)
+
