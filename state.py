@@ -82,13 +82,18 @@ class State():
         return roots
 
 
+    def printState(self):
+        for i in range(self.sideLength):
+            multiplier = i * self.sideLength
+            print(self.state[multiplier : self.sideLength + multiplier])
+
+
     def getWordFromPath(self, path):
         return ('').join([self.state[i] for i in path])
 
 
     def getRemovedWordState(self, path):
         newState = deepcopy(self)
-
 
         # Replace path with underscores (i.e. empty space)
         for i in path:
@@ -116,12 +121,6 @@ class State():
         return newState
 
 
-    def printState(self):
-        for i in range(self.sideLength):
-            multiplier = i * self.sideLength
-            print(self.state[multiplier : self.sideLength + multiplier])
-
-
 class StateNode():
     def __init__(self, index, value, parents, path):
         self.index = index
@@ -145,7 +144,6 @@ class StateNode():
             printChildren(child)
 
 
-    # optimise this?
     def getPaths(self):
         paths = [[self.index]]
         for child in self.children.values():
