@@ -6,6 +6,8 @@ import pytesseract
 BG_VALUE = 27
 THRESHOLD = 100
 MAX = 255
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
 def calc_edges_h(image, start_index, end_index, offset):
     box_coords = []
@@ -91,7 +93,7 @@ def calc_boxes(image, midpoints, width):
         for i in range(width):
             if image[block][i] > 150:
                 # Pixel is a line
-                if (last_line < i - 3) and (last_line > i - 20):
+                if (last_line < i - 2) and (last_line > i - 20):
                     # line is the start of the next box in the same word
                     last_line = i
                     word_lengths[word_index] += 1
@@ -216,13 +218,17 @@ def picture_to_state(filename_str):
     print("letters: " + str("".join(letters)))
     print("box coords: " + str(midpoints))
     print("word lengths: " + str(wordlengths))
+expected = [["POST",[4]],["LSELIDLOD",[5,4]],["LSELIDLOD",[5,4,3,3]],["",[4]],["",[4]]]
 
-picture_to_state("wordbrain.jpg")
-picture_to_state("wordbrain2.jpg")
-picture_to_state("wordbrain3.jpg")
-picture_to_state("wordbrain4.jpg")
-picture_to_state("wordbrain5.jpg")
-picture_to_state("wordbrain6.jpg")
-picture_to_state("wordbrain7.jpg")
-picture_to_state("wordbrain8.jpg")
+def test_easy():
+    picture_to_state("wordbrain1.jpg")
+    for i in range(2,17):
+        picture_to_state("wordbrain" + str(i) + ".jpg")
+def test_medium():
+    for i in range(17,19):
+        picture_to_state("wordbrain" + str(i) + ".jpg")
+def test_hard():
+    pass
+picture_to_state("wordbrain17.jpg")
+
 # Load an color image in grayscale
