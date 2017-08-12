@@ -32,6 +32,16 @@ class Trie():
         return True if '*' in head.children else False
 
 
+    def isPath(self, path):
+        head = self.root
+        for char in path:
+            if char not in head.children:
+                return False
+            head = head.children[char]
+
+        return True
+
+
 class TrieNode():
     def __init__(self, value, depth):
         self.value = value

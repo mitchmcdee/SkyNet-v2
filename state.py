@@ -43,24 +43,29 @@ class State():
         return children
 
 
-    def getPathRoots(self):
+    def getValidPathRoots(self, trie):
         roots = []
 
         for i,v in enumerate(self.state):
             if v == '_':
                 continue
 
-            root = StateNode(i, self.state[i], {})
+            root = StateNode(i, self.state[i], {}, [self.state[i]])
             stack = [root]
 
             while len(stack) != 0:
                 current = stack.pop()
 
-                for childIndex in self.getChildrenFromPoint(current.index):
-                    if childIndex in current.parents:
+                for c in self.getChildrenFromPoint(current.index):
+                    if c in current.parents:
                         continue
 
-                    child = StateNode(childIndex, self.state[childIndex], deepcopy(current.parents))
+                    childPath = deepcopy(current.path) + [self.state[c]]
+
+                    if trie.isPath(childPath) is not True:
+                        continue
+
+                    child = StateNode(c, self.state[c], deepcopy(current.parents), childPath)
                     child.addParent(current)
                     current.addChild(child)
                     stack.append(child)
@@ -106,11 +111,12 @@ class State():
 
 
 class StateNode():
-    def __init__(self, index, value, parents):
+    def __init__(self, index, value, parents, path):
         self.index = index
         self.value = value
         self.parents = parents
         self.children = {}
+        self.path = path
 
 
     def addChild(self, child):
