@@ -20,6 +20,7 @@ class State():
         self.state = state
         self.sideLength = int(sideLength)
 
+
     def getChildrenFromPoint(self, pointIndex):
         children = []
         for child in directions:
@@ -33,6 +34,29 @@ class State():
             children.append(childIndex)
 
         return children
+
+    def getWords(self):
+        words = []
+
+        for i,_ in enumerate(self.state):
+            root = StateNode(i, self.state[i], None)
+            stack = [root]
+            visited = set()
+
+            while len(stack) != 0:
+                current = stack.pop()
+
+                for c in self.getChildrenFromPoint(current.index):
+                    if current.hasParent(c):
+                        continue
+
+                    child = StateNode(c, self.state[c], current)
+                    current.addChild(child)
+                    stack.append(child)
+
+            words.extend(root.getWords())
+
+        return words
 
 class StateNode():
     def __init__(self, index, value, parent):
