@@ -20,9 +20,7 @@ class State():
         self.state = state
         self.sideLength = int(sideLength)
 
-    def getChildrenFromPoint(self, i, j):
-        pointIndex = i + self.sideLength * j
-
+    def getChildrenFromPoint(self, pointIndex):
         children = []
         for child in directions:
             childX = pointIndex % self.sideLength + child[0]
@@ -32,6 +30,39 @@ class State():
                 continue
 
             childIndex = childX + childY * self.sideLength
-            children.append(self.state[childIndex])
+            children.append(childIndex)
 
         return children
+
+class StateNode():
+    def __init__(self, index, value, parent):
+        self.index = index
+        self.value = value
+        self.parent = parent
+        self.children = {}
+
+    def addChild(self, child):
+        self.children[child.index] = child
+
+    def hasParent(self, parentIndex):
+        head = self
+
+        while head is not None:
+            if head.index == parentIndex:
+                return True
+
+            head = head.parent
+
+        return False
+
+    def printChildren(self):
+        print(self.value, self.children)
+        for child in self.children.values():
+            printChildren(child)
+
+    def getWords(self):
+        paths = [[self.value]]
+        for child in self.children.values():
+            paths.extend([[self.value] + child for child in child.getWords()])
+    
+        return paths
