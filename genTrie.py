@@ -29,7 +29,7 @@ def genTrie(maxWords):
     t = Trie()
 
     numWords = 0
-    with open("words.txt", "r") as f:
+    with open("cv/scrape_dict.txt", "r") as f:
         for i,w in enumerate(f):
             word = w.strip('\n')
 

@@ -143,8 +143,8 @@ class StateNode():
         return paths
 
 
-    def getValidPaths(self, trie, state, wordLength):
-        validLengths = list(filter(lambda x: len(x) == wordLength, self.getPaths()))
+    def getValidPaths(self, trie, state, wordLengths):
+        validLengths = list(filter(lambda x: len(x) in wordLengths, self.getPaths()))
         if len(validLengths) == 0:
             return None
 

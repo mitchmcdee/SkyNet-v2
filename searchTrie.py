@@ -4,6 +4,7 @@ import sys
 import os
 from trie import Trie, TrieNode
 from state import State, StateNode
+from copy import deepcopy
 
 
 #################
@@ -30,21 +31,20 @@ logger.addHandler(ch)
 # TEST_STATE = State(['a','b','l','e'])
 # TEST_WORD_LENS = [4]
 
-
 # TEST_STATE = State(['e','s','t','g','i','e','g','n','n'])
 # TEST_WORD_LENS = [6, 3]
 
 # TEST_STATE = State(['e','g','g','t','e','n','s','i','n'])
 # TEST_WORD_LENS = [6, 3]
 
-TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'])
-TEST_WORD_LENS = [6, 5, 5]
+# TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'])
+# TEST_WORD_LENS = [6, 5, 5]
 
 # TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'])
 # TEST_WORD_LENS = [8,4,4]
 
-# TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'])
-# TEST_WORD_LENS = [5, 3, 3, 8, 6]
+TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'])
+TEST_WORD_LENS = [5, 3, 3, 8, 6]
 
 
 def quit(reason):
@@ -61,27 +61,32 @@ def solveState(state, currentPath, wordLengths):
         return None
 
     validPaths = []
-    for i in range(len(wordLengths)):
-        for r in state.getValidPathRoots(t):
-            paths = r.getValidPaths(t, state, wordLengths[i])
+    for r in state.getValidPathRoots(t):
+        paths = r.getValidPaths(t, state, wordLengths)
 
-            if paths is None:
-                continue
+        if paths is None:
+            continue
 
-            validPaths.extend(paths)
+        validPaths.extend(paths)
 
     if len(validPaths) == 0:
         return None
 
     solvedStates = []
-    for i in range(len(wordLengths)):
-        for path in sorted(validPaths, key=lambda x: len(x)):
-            rv = solveState(state.getRemovedWordState(path), currentPath + [path], wordLengths[:i] + wordLengths[i+1:])
+    for path in sorted(validPaths, key=lambda x: len(x)):
+        # TODO(mitch): THIS IS WRONG!! You don't need to iterate over wordlengths,
+        # just remove the length of one in the valid path!! :)
+        # and we have that information!
 
-            if rv is None:
-                continue
+        shorterWordLengths = deepcopy(wordLengths)
+        shorterWordLengths.remove(len(path))
 
-            solvedStates.extend(rv)
+        rv = solveState(state.getRemovedWordState(path), currentPath + [path], shorterWordLengths)
+
+        if rv is None:
+            continue
+
+        solvedStates.extend(rv)
 
     # Ignore this lol. Removes all duplicate solutions
     return list(set(tuple([tuple(map(tuple, s)) for s in solvedStates])))
