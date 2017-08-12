@@ -145,7 +145,6 @@ class StateNode():
             printChildren(child)
 
 
-    # optimise this?
     def getPaths(self):
         paths = [[self.index]]
         for child in self.children.values():
