@@ -35,6 +35,7 @@ class State():
 
         return children
 
+
     def getWords(self):
         words = []
 
@@ -58,6 +59,7 @@ class State():
 
         return words
 
+
 class StateNode():
     def __init__(self, index, value, parent):
         self.index = index
@@ -65,8 +67,10 @@ class StateNode():
         self.parent = parent
         self.children = {}
 
+
     def addChild(self, child):
         self.children[child.index] = child
+
 
     def hasParent(self, parentIndex):
         head = self
@@ -78,10 +82,12 @@ class StateNode():
 
         return False
 
+
     def printChildren(self):
         print(self.value, self.children)
         for child in self.children.values():
             printChildren(child)
+
 
     def getWords(self):
         paths = [[self.value]]

@@ -7,6 +7,7 @@ import os
 from trie import Trie, TrieNode
 from state import State, StateNode
 
+
 #################
 # Logging Setup #
 #################
@@ -37,7 +38,6 @@ TEST_WORD_LENS = [1]
 logger.debug('Checking words.pickle exists')
 if os.path.exists('words.pickle') is not True:
     quit('Could not find words.pickle')
-logger.debug('Found words.pickle')
 
 logger.debug('Loading in words.pickle trie')
 with open('words.pickle', 'rb') as f:
@@ -45,13 +45,12 @@ with open('words.pickle', 'rb') as f:
 
 if t is None:
     quit('There was a problem loading in the pickle file')
-logger.debug('Loaded trie successfully')
 
 logger.debug('Generating word list')
 words = TEST_STATE.getWords()
 
-logger.debug("Checking valid words")
-for word in words:
+logger.debug('Checking valid words')
+for word in sorted(words, key=lambda x: len(x), reverse=True):
     logger.debug(('').join(word) + ": " + str(t.isWord(word)))
 
 
