@@ -10,11 +10,11 @@ SCREEN_COORDS = [0*2, 23*2, 365*2, 645*2] # Mitch's COORDS
 # TESSERACT_PATH = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
 # SCREEN_COORDS = [5, 81, 983, 1825] # Charlies COORDS
 
-# TEST_STATE = [['e','g','g','t','e','n','s','i','n'], [6,3]]
+TEST_STATE = [['e','g','g','t','e','n','s','i','n'], [6,3]]
 # TEST_STATE = [['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4]]
 # TEST_STATE = [['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6,5,5]]
 # TEST_STATE = [['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5,3,3,8,6]]
-TEST_STATE = [['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5]]
+# TEST_STATE = [['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5]]
 
 def screenshot(left, top, right, bottom):
     width = right - left

@@ -12,7 +12,7 @@ def quit(reason):
 def genTrie(maxWords):
     trie = Trie()
     numWords = 0
-    with open('words.txt', "r") as f:
+    with open('../resources/words.txt', "r") as f:
         # Loop over words an add them to the Trie
         for i, word in enumerate(f):
             numWords += trie.addWord(word.strip('\n'))
@@ -22,7 +22,7 @@ def genTrie(maxWords):
     print("Trie generated! Added " + str(numWords) + " words.")
     print("Dumping to words.pickle file")
     # Save to .pickle file
-    with open('words.pickle', 'wb') as f:
+    with open('../resources/words.pickle', 'wb') as f:
         pickle.dump(trie, f, pickle.HIGHEST_PROTOCOL)
         print("Dump complete (lol)")
 
