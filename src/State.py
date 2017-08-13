@@ -7,7 +7,7 @@ directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -
 
 # Log reason for quitting and quit
 def quit(reason):
-    logger.critical(reason)
+    print(reason)
     sys.exit(0)
 
 # State of
