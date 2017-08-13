@@ -26,6 +26,7 @@ class GameCompleteCV:
         logging.info("Width: " + str(width))
         ret,thresh = cv2.threshold(img,190,255, cv2.THRESH_BINARY)
         ratio = cv2.countNonZero(thresh) / float((height * width))
+        print(ratio)
         return ratio < 0.08
 
 

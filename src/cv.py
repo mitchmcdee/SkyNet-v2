@@ -136,20 +136,20 @@ class WordbrainCv:
                     # Pixel is a line
                     if (last_line == i - 1) and image[block][i] > image[block][last_line] - 10:
                         last_line = i
-                        logging.debug(str(image[block][i]) + "new last line")
-                    if (last_line < i - 1) and (last_line > i - 20):
+                        logger.debug(str(image[block][i]) + "new last line")
+                    if (last_line < i - 2) and (last_line > i - 20):
                         # line is the start of the next box in the same word
                         last_line = i
                         word_lengths[word_index] += 1
                         check_for_next_line = False # we are not expecting a double line
-                        logging.debug(str(image[block][i]) + "next letter")
+                        logger.debug(str(image[block][i]) + "next letter")
                         for ind in range(i,(i+5)):
                             for jnd in range(block,block+5):
                                 count_image[jnd][ind] = 150
                     elif (last_line < (i - 15)):
                         if check_for_next_line == False:
                             last_line = i
-                            logging.debug(str(image[block][i]) + "end of box")
+                            logger.debug(str(image[block][i]) + "end of box")
                             # This line is the end of a box, ignore it
                             check_for_next_line = True
                             continue
@@ -158,14 +158,14 @@ class WordbrainCv:
                         word_index += 1
                         word_lengths.append(1)
                         check_for_next_line = False
-                        logging.debug(str(image[block][i]) + "New word")
+                        logger.debug(str(image[block][i]) + "New word")
                         for ind in range(i,(i+10)):
                             for jnd in range(block,block+10):
                                 count_image[jnd][ind] = 255
                     else:
-                        logging.debug(image[block][i])
+                        logger.debug(image[block][i])
                 else:
-                    logging.debug(image[block][i])
+                    logger.debug(image[block][i])
             res = cv2.addWeighted(count_image,1,image,0.2,0)
             self.count_img = count_image
             # cv2.imwrite('count.png',res)
@@ -275,8 +275,8 @@ class WordbrainCv:
         logging.info("Height: " + str(height))
         logging.info("Width: " + str(width))
         box_coords = self.calc_box_coords(img,width,height)
-        print(str(box_coords))
-        print(str(len(box_coords)))
+        # print(str(box_coords))
+        # print(str(len(box_coords)))
         self.save_each_letter(box_coords,img)
         letters = self.temp_files_to_letters(len(box_coords))
         logging.info(letters)
