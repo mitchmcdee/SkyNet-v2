@@ -1,5 +1,15 @@
+beautifulsoup4==4.6.0
+certifi==2017.7.27.1
+chardet==3.0.4
+idna==2.5
 numpy==1.12.1
 olefile==0.44
 opencv-python==3.2.0.8
 Pillow==4.2.1
+PyAutoGUI==0.9.36
+PyMsgBox==1.0.6
+PyScreeze==0.1.13
 pytesseract==0.1.7
+PyTweening==1.0.3
+requests==2.18.3
+urllib3==1.22

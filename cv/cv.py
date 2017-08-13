@@ -236,13 +236,15 @@ class WordbrainCv(object):
 
     def filename_to_state(self, filename_str):
         img = cv2.imread(filename_str, 0)
-        self.cv_image_to_state(img)
+        return self.cv_image_to_state(img)
 
 
     def image_to_state(self, image):
         pass
-        img = NotImplemented
-        self.cv_image_to_state(img)
+        img = np.array(image)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        return  self.cv_image_to_state(img)
+
     def print_cv_process_img(self):
         res = cv2.add(self.box_img,self.count_img)
         cv2.imwrite('processed.png',res)
@@ -268,7 +270,7 @@ class WordbrainCv(object):
         logging.debug(box_coords)
         midpoints = self.midpoint_of_box(box_coords)
         self.print_cv_process_img()
-        print(letters, midpoints, wordlengths)
+
         return (letters, midpoints, wordlengths)
 
     def test_easy():
@@ -283,7 +285,10 @@ class WordbrainCv(object):
 
 def main():
     cv = WordbrainCv()
-    cv.filename_to_state(cv.TEST_DIR + "wordbrain18.jpg")
+    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain18.jpg")
+    print(letters)
+    print(midpoints)
+    print(wordlengths)
     
 
 
