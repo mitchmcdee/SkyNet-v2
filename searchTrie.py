@@ -2,8 +2,8 @@ import pickle
 import logging
 import sys
 import os
-from trie import Trie, TrieNode
-from state import State, StateNode
+from Trie import Trie, TrieNode
+from State import State, StateNode
 from copy import deepcopy
 from itertools import chain
 
@@ -38,34 +38,40 @@ def quit(reason):
     sys.exit(0)
 
 # Solve the current board state
-def solveState(state, currentPath=[]):
+def solveState(state, trie, currentPath=[]):
     # logger.debug("Solving " + str(state.state))
 
+    # If there are no more word lengths, there's nothing left to solve
     if len(state.wordLengths) == 0:
-        return [currentPath] if len(list(chain.from_iterable(currentPath))) == len(state.state) else None
+        return [currentPath]
 
+    # Loop over the root nodes and add their valid paths
     validPaths = []
-    for r in state.getValidRoots(t):
-        paths = r.getValidPaths(t, state)
+    for r in state.getValidRoots(trie):
+        paths = r.getValidPaths(trie, state)
         (validPaths.extend(paths) if paths else None)
 
-    solvedStates = []
+    # Loop over the valid paths and add their solved states
+    solutionPaths = []
     for path in validPaths:
-        rv = solveState(state.getRemovedWordState(path), currentPath + [path])
-        (solvedStates.extend(rv) if rv else None)
+        rv = solveState(state.getRemovedWordState(path), trie, currentPath + [path])
+        (solutionPaths.extend(rv) if rv else None)
 
-    # Ignore this lol. Removes all duplicate solutions
-    return list(set(tuple([tuple(map(tuple, s)) for s in solvedStates])))
+    # Ignore this lol. Removes all duplicate solution paths
+    return list(set(tuple([tuple(map(tuple, s)) for s in solutionPaths])))
 
-logger.debug('Checking words.pickle exists')
-if os.path.exists('words.pickle') is not True:
-    quit('Could not find words.pickle')
+# Check file
+if len(sys.argv) == 1 or not os.path.exists(sys.argv[1]):
+    print('Must provide a valid .pickle file')
+    sys.exit(0)
 
-logger.debug('Loading in words.pickle trie')
-with open('words.pickle', 'rb') as f:
-    t = pickle.load(f)
+# Load .pickle file
+logger.debug('Loading in .pickle trie')
+with open(sys.argv[1], 'rb') as f:
+    trie = pickle.load(f)
 
-if t is None:
-    quit('There was a problem loading in the pickle file')
+if trie is None:
+    quit('There was a problem loading in the .pickle file')
 
-print(solveState(TEST_STATE))
+# Solve the given state
+print(solveState(TEST_STATE, trie))

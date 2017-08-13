@@ -1,7 +1,7 @@
 import pickle
 import sys
 import os
-from trie import Trie, TrieNode
+from Trie import Trie, TrieNode
 
 # Generates a trie when given a file and optionally the maximum amount of words to add
 def genTrie(fileName, maxWords):
