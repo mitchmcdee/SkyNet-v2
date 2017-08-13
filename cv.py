@@ -174,8 +174,8 @@ class WordbrainCv(object):
         logging.info("offset: " + str(vert_offset) + " bottom: " + str(bottom))
         i_indexes = []
         print("Begging wide scan")
-        for i in range(vert_offset, bottom):
-            print("iterate")
+        SPEED_INCREASE = 4 # sacrifice accuracy for a speed boost by increasing this
+        for i in range(vert_offset, bottom, SPEED_INCREASE):
             bg_count = 0
             temp = []
             white_flag = False
@@ -186,7 +186,8 @@ class WordbrainCv(object):
                 if image[i,j] > 180:
                     white_flag = True
             if (bg_count > (0.50*width)) and white_flag:
-                i_indexes.append(i)
+                for inc in range(SPEED_INCREASE):
+                    i_indexes.append(i+inc)
         print("finished wide scan")
         logging.debug("scan indexs: " + str(i_indexes))
         print("finding midpoints")
@@ -299,7 +300,7 @@ class WordbrainCv(object):
 
 def main():
     cv = WordbrainCv()
-    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain18.jpg")
+    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain4.jpg")
     print(letters)
     print(midpoints)
     print(wordlengths)

@@ -4,4 +4,5 @@
 __pycache__/
 *.pickle
 .venv/
-cv/temp/
+temp/
+*.png
