@@ -24,7 +24,8 @@ bat
 bathroom
 beard
 beard
-beard- meat
+beard
+meat
 bed
 bed
 bedroom
