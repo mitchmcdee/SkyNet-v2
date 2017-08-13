@@ -1,73 +1,40 @@
-import logging
 import pickle
 import sys
-from trie import Trie, TrieNode
+import os
+from Trie import Trie, TrieNode
 
-
-#################
-# Logging Setup #
-#################
-
-# Setup logging
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
-# Additionally log to stdout
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-
-###################
-# Trie Generating #
-###################
-
-MINWORDSIZE = 2
-
-def genTrie(maxWords):
-    t = Trie()
+# Generates a trie when given a file and optionally the maximum amount of words to add
+def genTrie(fileName, maxWords):
+    trie = Trie()
 
     numWords = 0
-    with open("cv/scrape_dict.txt", "r") as f:
-        for i,w in enumerate(f):
-            word = w.strip('\n')
+    with open(fileName, "r") as f:
 
-            if len(word) < MINWORDSIZE:
-                continue
-
-            t.addToTrie(word)
-
-            numWords += 1
+        # Loop over words an add them to the Trie
+        for i, word in enumerate(f):
+            numWords += trie.addWord(word.strip('\n'))
             if numWords >= maxWords:
                 break
 
-    logger.debug("Total number of words is: " + str(numWords))
+    print("Trie generated! Added " + str(numWords) + " words.")
+    print("Dumping to .pickle file")
+    # Save to .pickle file
+    with open(fileName.split('.')[0] + '.pickle', 'wb') as f:
+        pickle.dump(trie, f, pickle.HIGHEST_PROTOCOL)
+        print("Dump complete (lol)")
 
-    with open('words.pickle', 'wb') as f:
-        pickle.dump(t, f, pickle.HIGHEST_PROTOCOL)
+# Check file
+if len(sys.argv) == 1 or not os.path.exists(sys.argv[1]):
+    print('Must provide a valid word list file')
+    sys.exit(0)
 
-    logger.debug("Trie generated!")
+# Check word limit
+if len(sys.argv) > 2 and not sys.argv[2].isdigit():
+    print('Must provide a valid word limit')
+    sys.exit(0)
 
+fileName = sys.argv[1]
+maxWords = int(sys.argv[2]) if len(sys.argv) == 3 else sys.maxsize
 
-def validateTrie():
-    with open('words.pickle', 'rb') as f:
-        t = pickle.load(f)
-        if isinstance(t, Trie):
-            logger.debug("Trie is VALID")
-            return t
-        else:
-            logger.critical("Trie is INVALID")
-
-
-if len(sys.argv) >= 2 and sys.argv[1] == 'gen':
-    numWords = int(sys.argv[2]) if (len(sys.argv) == 3) else sys.maxsize
-    genTrie(numWords)
-
-elif len(sys.argv) == 2 and sys.argv[1] == 'read':
-    t = validateTrie()
-    if t is not None:
-        logger.debug("Longest word length in trie is: " + str(t.getMaxDepth(t.root)))
-
-else:
-    logger.critical("Must be 'gen' or 'read'")
+# Generate Trie
+genTrie(fileName, maxWords)
