@@ -5,6 +5,11 @@ from copy import deepcopy
 # Possible neighbour directions of each node in a State
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
+# Log reason for quitting and quit
+def quit(reason):
+    logger.critical(reason)
+    sys.exit(0)
+
 # State of
 class State():
     def __init__(self, state, wordLengths):
@@ -13,18 +18,15 @@ class State():
 
         # Check input state is a perfect square
         if (sideLength != int(sideLength)):
-            print("Input state is not a perfect square")
-            sys.exit(0)
+            quit("Input state is not a perfect square")
 
         # Check all chars are valid
         if not all([str(c).isalpha() or c == '_' for c in state]):
-            print("Input contains illegal chars")
-            sys.exit(0)
+            quit("Input contains illegal chars")
 
         # Check word lengths are valid
         if len(state) != sum(wordLengths):
-            print("Input contains invalid word lengths")
-            sys.exit(0)
+            quit("Input contains invalid word lengths")
 
         self.state = state
         self.sideLength = int(sideLength)

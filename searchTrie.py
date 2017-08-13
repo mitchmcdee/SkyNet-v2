@@ -7,7 +7,6 @@ from state import State, StateNode
 from copy import deepcopy
 from itertools import chain
 
-
 #################
 # Logging Setup #
 #################
@@ -23,7 +22,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-
 ##################
 # Trie Searching #
 ##################
@@ -34,11 +32,12 @@ TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r',
 # TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5,3,3,8,6])
 # TEST_STATE = State(['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5])
 
+# Log reason for quitting and quit
 def quit(reason):
     logger.critical(reason)
     sys.exit(0)
 
-
+# Solve the current board state
 def solveState(state, currentPath=[]):
     # logger.debug("Solving " + str(state.state))
 
@@ -57,7 +56,6 @@ def solveState(state, currentPath=[]):
 
     # Ignore this lol. Removes all duplicate solutions
     return list(set(tuple([tuple(map(tuple, s)) for s in solvedStates])))
-
 
 logger.debug('Checking words.pickle exists')
 if os.path.exists('words.pickle') is not True:
