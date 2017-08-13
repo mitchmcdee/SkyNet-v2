@@ -130,9 +130,12 @@ class WordbrainCv(object):
             logging.debug(image[block])
             check_for_next_line = True
             for i in range(width):
-                if image[block][i] > 150:
+                if image[block][i] > 100:
                     # Pixel is a line
-                    if (last_line < i - 2) and (last_line > i - 20):
+                    if (last_line == i - 1) and image[block][i] > image[block][last_line] - 10:
+                        last_line = i
+                        logging.debug(str(image[block][i]) + "new last line")
+                    if (last_line < i - 1) and (last_line > i - 20):
                         # line is the start of the next box in the same word
                         last_line = i
                         word_lengths[word_index] += 1
@@ -158,10 +161,8 @@ class WordbrainCv(object):
                             for jnd in range(block,block+10):
                                 count_image[jnd][ind] = 255
                     else:
-                        pass
                         logging.debug(image[block][i])
                 else:
-                    pass
                     logging.debug(image[block][i])
             res = cv2.addWeighted(count_image,1,image,0.2,0)
             self.count_img = count_image
@@ -288,19 +289,24 @@ class WordbrainCv(object):
         self.print_cv_process_img()
         return (letters, midpoints, wordlengths)
 
-    def test_easy():
-        picture_to_state(self.TEST_DIR + "wordbrain1.jpg")
+    def test_easy(self):
+        self.filename_to_state(self.TEST_DIR + "wordbrain1.jpg")
         for i in range(2,17):
-            picture_to_state(self.TEST_DIR + "wordbrain" + str(i) + ".jpg")
-    def test_medium():
+            letters, midpoints, wordlengths = self.filename_to_state(self.TEST_DIR + "wordbrain" + str(i) + ".jpg")
+            print("==========")
+            print(letters)
+            print(wordlengths)
+            print("==========")
+    def test_medium(self):
         for i in range(17,19):
-            picture_to_state(self.TEST_DIR + "wordbrain" + str(i) + ".jpg")
-    def test_hard():
+            self.filename_to_state(self.TEST_DIR + "wordbrain" + str(i) + ".jpg")
+    def test_hard(self):
         pass
 
 def main():
     cv = WordbrainCv()
-    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain4.jpg")
+    cv.test_easy()
+    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain20.png")
     print(letters)
     print(midpoints)
     print(wordlengths)

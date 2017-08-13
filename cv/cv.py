@@ -299,7 +299,8 @@ class WordbrainCv(object):
 
 def main():
     cv = WordbrainCv()
-    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain18.jpg")
+    print("Running")
+    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain20.png")
     print(letters)
     print(midpoints)
     print(wordlengths)
