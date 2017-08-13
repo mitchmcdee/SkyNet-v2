@@ -1,8 +1,6 @@
 #!/bin/python
 import pyautogui, time
 
-
-
 def screenshot(left, top, width, height):
 	width = width - left
 	height = height - top

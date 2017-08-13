@@ -67,6 +67,7 @@ for url_name in names_lower:
                     new_dict += [word]
 print(new_dict)
 with open("scrape_dict.txt","w") as dict_file:
+    dict_file.truncate()
     new_dict.sort()
     for word in new_dict:
         dict_file.write(word.lower() + "\n")
