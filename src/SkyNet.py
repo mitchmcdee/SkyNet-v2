@@ -5,7 +5,7 @@ from searchTrie import solveLevel
 from cv import WordbrainCv
 
 TESSERACT_PATH = '/usr/local/Cellar/tesseract/3.05.01/bin/tesseract'
-SCREEN_COORDS = [0*2, 23*2, 365*2, 645*2] # Mitch's COORDS
+SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
 
 # TESSERACT_PATH = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
 # SCREEN_COORDS = [5, 81, 983, 1825] # Charlies COORDS
@@ -21,21 +21,27 @@ def screenshot(left, top, right, bottom):
     height = bottom - top
     return pyautogui.screenshot(region=(left, top, width, height))
 
-def selectWords(listOfWords, speed = 0.1):
-    for word in listOfWords:
-        #move to the start of the word before selecting anything
-        pyautogui.moveTo(word[0][0], word[0][1], speed)
+def enterWord(word, speed = 0.5):
+    print(word)
 
-        #press mouse down for the entire mouse moving sequence
-        pyautogui.mouseDown()
+    # Move to the start of the word before selecting anything
+    pyautogui.moveTo(word[0][0], word[0][1], speed)
 
-        for letter in word:
-            pyautogui.moveTo(letter[0], letter[1], speed)
+    # Hold mouse down for the entire mouse moving sequence
+    pyautogui.mouseDown()
 
-        pyautogui.mouseUp()
+    # Move over each letter
+    for letter in word:
+        pyautogui.moveTo(letter[0], letter[1], speed)
+
+    # Release mouse up
+    pyautogui.mouseUp()
 
 levelImage = screenshot(SCREEN_COORDS[0], SCREEN_COORDS[1], SCREEN_COORDS[2], SCREEN_COORDS[3])
 cv = WordbrainCv(TESSERACT_PATH)
-print(cv.image_to_state(levelImage))
+state, coords, wordLengths = cv.image_to_state(levelImage)
+solutions = solveLevel([c.lower() for c in state], wordLengths)
 
-print(solveLevel(TEST_STATE[0], TEST_STATE[1]))
+for solution in solutions[:1]:
+    mouseCoords = [[list(map(lambda x: x//3, coords[i])) for i in s] for s in solution]
+    enterWord(sum(mouseCoords, []))
