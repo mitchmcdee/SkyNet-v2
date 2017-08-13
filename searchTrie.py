@@ -30,10 +30,9 @@ logger.addHandler(ch)
 
 # TEST_STATE = State(['e','g','g','t','e','n','s','i','n'], [6,3])
 # TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4])
-# TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6,5,5])
+TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6,5,5])
 # TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5,3,3,8,6])
 # TEST_STATE = State(['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5])
-
 
 def quit(reason):
     logger.critical(reason)
@@ -47,7 +46,7 @@ def solveState(state, currentPath=[]):
         return [currentPath] if len(list(chain.from_iterable(currentPath))) == len(state.state) else None
 
     validPaths = []
-    for r in state.getValidPathRoots(t):
+    for r in state.getValidRoots(t):
         paths = r.getValidPaths(t, state)
         (validPaths.extend(paths) if paths else None)
 

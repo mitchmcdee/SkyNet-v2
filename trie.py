@@ -1,27 +1,25 @@
+# Trie Tree that holds a dictionary of words
 class Trie():
     def __init__(self):
-        self.root = TrieNode('_', 0)
+        self.root = TrieNode('_')
 
-
-    def addToTrie(self, string):
+    # Add a word to the Trie
+    def addWord(self, word):
         head = self.root
-        for char in string:
+        for char in word:
             if char not in head.children:
-                head.addChild(TrieNode(char, head.depth + 1))
+                head.addChild(TrieNode(char))
             head = head.children[char]
+
+        # Return 0 if word already exists, else 1
+        if '*' in head.children:
+            return 0
 
         # Symbolise end of a word
         head.children['*'] = None
+        return 1
 
-
-    def getMaxDepth(self, head):
-        maxDepth = head.depth
-        for child in head.children.values():
-            maxDepth = max(maxDepth, self.getMaxDepth(child))
-
-        return maxDepth
-
-
+    # Check whether given word is in the Trie
     def isWord(self, word):
         head = self.root
         for char in word:
@@ -31,7 +29,7 @@ class Trie():
 
         return True if '*' in head.children else False
 
-
+    # Check whether given path is in the Trie
     def isPath(self, path):
         head = self.root
         for char in path:
@@ -42,12 +40,12 @@ class Trie():
         return True
 
 
+# Trie Node that represents a character value and its children in the Trie
 class TrieNode():
-    def __init__(self, value, depth):
+    def __init__(self, value):
         self.value = value
-        self.depth = depth
         self.children = {}
-        
 
+    # Add a child node
     def addChild(self, node):
         self.children[node.value] = node
