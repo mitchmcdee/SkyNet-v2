@@ -6,3 +6,5 @@ __pycache__/
 .venv/
 temp/
 *.png
+src/temp
+src/test
