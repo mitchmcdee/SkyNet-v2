@@ -57,12 +57,12 @@ def solveLevel(state, wordLengths):
     levelState = State(state, wordLengths)
 
     # Check .pickle file
-    if not os.path.exists('words.pickle'):
+    if not os.path.exists('../resources/words.pickle'):
         quit('Must generate a words.pickle file')
 
     # Load .pickle file
     logger.debug('Loading in Trie from words.pickle')
-    with open('words.pickle', 'rb') as f:
+    with open('../resources/words.pickle', 'rb') as f:
         trie = pickle.load(f)
 
     # Check Trie was valid

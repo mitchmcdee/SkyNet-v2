@@ -6,10 +6,10 @@ import pytesseract
 import os.path
 
 logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
-pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
-class WordbrainCv(object):
-    def __init__(self):
+logger.setLevel(logging.CRITICAL)
+
+class WordbrainCv:
+    def __init__(self, tesseractPath):
         self.BG_VALUE = 27
         self.THRESHOLD = 100
         self.MAX = 255
@@ -20,6 +20,8 @@ class WordbrainCv(object):
         self.box_img = None
         self.count_img = None
         self.letter_imgs = []
+
+        pytesseract.pytesseract.tesseract_cmd = tesseractPath    
 
     def calc_edges_h(self, image, start_index, end_index, offset):
         box_coords = []
