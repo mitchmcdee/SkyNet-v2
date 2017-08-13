@@ -1,5 +1,5 @@
 import pyautogui, time
-from cv.cv import WordbrainCv
+from cv import WordbrainCv
 
 def screenshot(left, top, width, height):
     width = width - left
