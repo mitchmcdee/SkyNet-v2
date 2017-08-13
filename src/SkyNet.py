@@ -1,6 +1,7 @@
 import pyautogui
 import time
 import sys
+import math
 from PIL import Image
 from searchTrie import solveLevel
 from cv import WordbrainCv
@@ -13,7 +14,8 @@ SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
 
 # for 2x2, 3x3
 GRID_COORDS = [[[94,218], [270,219], [94,393], [267,394]],
-               [[65,193], [182,190], [299,190], [65,308], [182,309], [298,308], [67,421], [184,424], [299,425]]]
+               [[65,193], [182,190], [299,190], [65,308], [182,309], [298,308], [67,421], [184,424], [299,425]],
+               [[49,173], [141,177], [227,177], [317,175], [55,264], [139,263], [229,264], [314,263], [52,352], [140,352], [229,354], [315,353], [53,440], [139,439], [225,440], [315,442]]]
 
 # TEST_STATE = [['e','g','g','t','e','n','s','i','n'], [6,3]]
 # TEST_STATE = [['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4]]
@@ -52,11 +54,14 @@ while(True):
     # Get level state, coords and word lengths required
     state, coords, wordLengths = WordbrainCv(TESSERACT_PATH).image_to_state(levelImage)
 
+    print(state, wordLengths)
+
     # Generate solutions
     solutions = solveLevel([c.lower() for c in state], wordLengths)
 
     for solution in solutions:
-        mouseCoords = [[GRID_COORDS[1][i] for i in s] for s in solution]
+
+        mouseCoords = [[GRID_COORDS[int(math.sqrt(len(state)))-2][i] for i in s] for s in solution]
         enterWords(mouseCoords)
 
         time.sleep(2)
@@ -70,4 +75,3 @@ while(True):
         pyautogui.mouseDown()
         pyautogui.mouseUp()
         time.sleep(2)
-
