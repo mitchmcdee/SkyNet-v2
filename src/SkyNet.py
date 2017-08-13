@@ -46,7 +46,6 @@ def enterWords(words, speed = 0.15):
         pyautogui.moveTo(500, 500, 0)
         time.sleep(1)
 
-
 while(True):
     # Get level image
     levelImage = screenshot(SCREEN_COORDS[0], SCREEN_COORDS[1], SCREEN_COORDS[2], SCREEN_COORDS[3])
