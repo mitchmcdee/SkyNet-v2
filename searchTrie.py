@@ -26,12 +26,6 @@ logger.addHandler(ch)
 # Trie Searching #
 ##################
 
-# TEST_STATE = State(['e','g','g','t','e','n','s','i','n'], [6,3])
-# TEST_STATE = State(['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4])
-# TEST_STATE = State(['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6,5,5])
-TEST_STATE = State(['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5,3,3,8,6])
-# TEST_STATE = State(['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5])
-
 # Log reason for quitting and quit
 def quit(reason):
     logger.critical(reason)
@@ -39,8 +33,6 @@ def quit(reason):
 
 # Solve the current board state
 def solveState(state, trie, currentPath=[]):
-    # logger.debug("Solving " + str(state.state))
-
     # If there are no more word lengths, there's nothing left to solve
     if len(state.wordLengths) == 0:
         return [currentPath]
@@ -59,18 +51,23 @@ def solveState(state, trie, currentPath=[]):
 
     return solutionPaths
 
-# Check file
-if len(sys.argv) == 1 or not os.path.exists(sys.argv[1]):
-    print('Must provide a valid .pickle file')
-    sys.exit(0)
+# Solve the current level
+def solveLevel(state, wordLengths):
+    # Create level state
+    levelState = State(state, wordLengths)
 
-# Load .pickle file
-logger.debug('Loading in .pickle trie')
-with open(sys.argv[1], 'rb') as f:
-    trie = pickle.load(f)
+    # Check .pickle file
+    if not os.path.exists('words.pickle'):
+        quit('Must generate a words.pickle file')
 
-if trie is None:
-    quit('There was a problem loading in the .pickle file')
+    # Load .pickle file
+    logger.debug('Loading in Trie from words.pickle')
+    with open('words.pickle', 'rb') as f:
+        trie = pickle.load(f)
 
-# Solve the given state
-print(solveState(TEST_STATE, trie))
+    # Check Trie was valid
+    if trie is None:
+        quit('There was a problem loading in the .pickle file')
+
+    # Solve the given state
+    return solveState(levelState, trie)
