@@ -120,6 +120,16 @@ class WordbrainCv:
                 continue
             midpoints.append(block[int(len(block)/2)])
         return midpoints
+    def is_start_of_new_letter(self,image,block,i,half,height,count_image):
+        x = i + half
+        print(f"starting height: {block}, ending: {block+height}, starting horizontal: {x}")
+        for j in range(block-height-3, block):
+            print(f"going up:{j} found {image[j][x]}")
+            count_image[j][x] = 150
+            if image[j][x] > 80:
+                print(f"found while {image[j][x]} going up line")
+                return True
+        return False
 
     def calc_boxes(self, image, midpoints, width):
         count_image = image.copy()
@@ -131,39 +141,93 @@ class WordbrainCv:
             last_line = 0
             logging.debug(image[block])
             check_for_next_line = True
+            on_a_word = False
+            half_box_length = None
             for i in range(width):
+                #print(image[block][i])
                 if image[block][i] > 100:
+                    print(image[block][i])
                     # Pixel is a line
-                    if (last_line == i - 1) and image[block][i] > image[block][last_line] - 10:
-                        last_line = i
-                        logger.debug(str(image[block][i]) + "new last line")
-                    if (last_line < i - 2) and (last_line > i - 20):
-                        # line is the start of the next box in the same word
-                        last_line = i
-                        word_lengths[word_index] += 1
-                        check_for_next_line = False # we are not expecting a double line
-                        logger.debug(str(image[block][i]) + "next letter")
-                        for ind in range(i,(i+5)):
-                            for jnd in range(block,block+5):
-                                count_image[jnd][ind] = 150
-                    elif (last_line < (i - 15)):
-                        if check_for_next_line == False:
+                    if half_box_length == None:
+                        # Box_length has not been found
+                        if last_line == 0:
+                            word_index += 1
+                            word_lengths.append(1)
+                            on_a_word = True
                             last_line = i
-                            logger.debug(str(image[block][i]) + "end of box")
-                            # This line is the end of a box, ignore it
-                            check_for_next_line = True
+                            print("First line")
+                            for ind in range(i,(i+10)):
+                                for jnd in range(block,block+10):
+                                    count_image[jnd][ind] = 255
                             continue
-                        # line is the start of a new word
-                        last_line = i
-                        word_index += 1
-                        word_lengths.append(1)
-                        check_for_next_line = False
-                        logger.debug(str(image[block][i]) + "New word")
-                        for ind in range(i,(i+10)):
-                            for jnd in range(block,block+10):
-                                count_image[jnd][ind] = 255
+                        if (last_line > i - 3):
+                            print("ignoring line")
+                            last_line = i
+                            continue
+                        print("Second line")
+                        half_box_length = (i - last_line) // 2
+                        print(f"half box length: {half_box_length}")
+                    
+                    if (last_line > (i - half_box_length)):
+                        print("ignoring")
+                        # line is too close to last line, ignore it
+                        continue
+                    print("checking if new letter")
+                    if self.is_start_of_new_letter(image,block,i,half_box_length,half_box_length,count_image):
+                        print("Start of new letter")
+                        if on_a_word:
+                            word_lengths[word_index] += 1
+                            last_line = i
+                            for ind in range(i,(i+5)):
+                                for jnd in range(block,block+5):
+                                    count_image[jnd][ind] = 150
+                        else:
+                            on_a_word = True
+                            word_index += 1
+                            word_lengths.append(1)
+                            last_line = i
+                            for ind in range(i,(i+10)):
+                                for jnd in range(block,block+10):
+                                    count_image[jnd][ind] = 255
                     else:
-                        logger.debug(image[block][i])
+                        print("end of word")
+                        on_a_word = False
+
+
+                        
+                    
+                        
+
+                    # if (last_line == i - 1) and image[block][i] > image[block][last_line] - 10:
+                    #     last_line = i
+                    #     logger.debug(str(image[block][i]) + "new last line")
+                    # if (last_line < i - 2) and (last_line > i - 20):
+                    #     # line is the start of the next box in the same word
+                    #     last_line = i
+                    #     word_lengths[word_index] += 1
+                    #     check_for_next_line = False # we are not expecting a double line
+                    #     logger.debug(str(image[block][i]) + "next letter")
+                    #     for ind in range(i,(i+5)):
+                    #         for jnd in range(block,block+5):
+                    #             count_image[jnd][ind] = 150
+                    # elif (last_line < (i - 15)):
+                    #     if check_for_next_line == False:
+                    #         last_line = i
+                    #         logger.debug(str(image[block][i]) + "end of box")
+                    #         # This line is the end of a box, ignore it
+                    #         check_for_next_line = True
+                    #         continue
+                    #     # line is the start of a new word
+                    #     last_line = i
+                        # word_index += 1
+                        # word_lengths.append(1)
+                    #     check_for_next_line = False
+                    #     logger.debug(str(image[block][i]) + "New word")
+                    #     for ind in range(i,(i+10)):
+                    #         for jnd in range(block,block+10):
+                    #             count_image[jnd][ind] = 255
+                    # else:
+                    #     logger.debug(image[block][i])
                 else:
                     logger.debug(image[block][i])
             res = cv2.addWeighted(count_image,1,image,0.2,0)
@@ -271,6 +335,9 @@ class WordbrainCv:
         cv2.imwrite('processed.png',res)
 
     def cv_image_to_state(self, img):
+        self.box_img = None
+        self.count_img = None
+        self.letter_imgs = []
         height, width = img.shape
         logging.info("Height: " + str(height))
         logging.info("Width: " + str(width))
@@ -304,14 +371,20 @@ class WordbrainCv:
             self.filename_to_state(self.TEST_DIR + "wordbrain" + str(i) + ".jpg")
     def test_hard(self):
         pass
+    def test_custom(self):
+        letters, midpoints, wordlengths = self.filename_to_state(self.TEST_DIR + "wordbrain" + str(18) + ".jpg")
+        print(letters)
+        print(midpoints)
+        print(wordlengths)
 
 def main():
-    cv = WordbrainCv()
-    cv.test_easy()
-    letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain20.png")
-    print(letters)
-    print(midpoints)
-    print(wordlengths)
+    TESSERACT_PATH = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
+    cv = WordbrainCv(TESSERACT_PATH)
+    cv.test_custom()
+    # letters, midpoints, wordlengths = cv.filename_to_state(cv.TEST_DIR + "wordbrain20.png")
+    # print(letters)
+    # print(midpoints)
+    # print(wordlengths)
     
 
 
