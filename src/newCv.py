@@ -77,22 +77,33 @@ class Vision:
         return sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])
 
     def getWordLengthsFromImage(self, image):
-        startY = int(0.804 * self.height)
-        widthJump = int(0.076 * self.width)
-        heightJump = int(0.05 * self.height)
-
         # TODO(mitch): everything works, just need to get width jump and height jump which varies puzzle to puzzle
 
+        # Loop over all possible rows (3)
         words = []
-        topY = startY - heightJump
+        startY = int(0.804 * self.height)       # Should be a valid y position of first row
+        topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
         for _ in range(3):
             # Find the first word's left edge
             x = 0
             while x < image.shape[1]:
                 pixel = image[startY][x]
 
-                # Check if we've found a white edge
+                # Check if we've found the left edge
                 if pixel > 100:
+
+                    # Find the width of a letter box
+                    lowFlag = False
+                    for i in range(x, x + int(0.1 * self.width)): # Should be a valid width jump for now
+                        pixel = image[startY][i]
+
+                        # If we've hit a low pixel then see high again, we have hit another edge and know the width
+                        if pixel < 100 and not lowFlag:
+                            lowFlag = True
+                        elif pixel > 100 and lowFlag:
+                            widthJump = i - x + 3 # Offset to account for width of cell
+                            break
+
                     # Add half the width of a word box
                     x += widthJump // 2
                     break
@@ -110,25 +121,40 @@ class Vision:
 
                 # Check if we've found a white edge
                 if pixel > 100:
+
+                    # Find the height of a letter box
+                    lowFlag = False
+                    for i in range(y, y + int(0.07 * self.height)): # Should be a valid height jump for now
+                        pixel = image[i][x]
+
+                        # If we've hit a low pixel then see high again, we have hit another edge and know the height
+                        if pixel < 100 and not lowFlag:
+                            lowFlag = True
+                        elif pixel > 100 and lowFlag:
+                            heightJump = i - y + 2 # Offset to account for height of cell
+                            break
+
                     break
 
                 y += 1
 
-            topY = y + int(0.047 * self.height)
+            # Calculate the topY and startY for the next row
+            topY = y + heightJump
             startY = topY + heightJump // 2
 
+            # Loop over potential letter locations to build words
             wordLength = 0
             for i in range(x, image.shape[1], widthJump):
-                pixel = max([image[y+j][i] for j in range(-10,10)])
+                pixel = max([image[y+j][i] for j in range(10)])
 
                 # Check if we've found a white edge
                 if pixel > 100:
                     wordLength += 1
-                    print(i, pixel, 'inc')
-                elif wordLength != 0:
+
+                # If we didn't find one, check the word we're adding is of valid length
+                elif wordLength >= 2:
                     words.append(wordLength)
                     wordLength = 0
-                    print(i, pixel, 'added')
 
         return words
 
