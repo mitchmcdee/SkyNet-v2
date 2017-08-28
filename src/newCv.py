@@ -9,15 +9,36 @@ class Vision:
     # topleft coord %, mid distance x %, mid distance y %, width x %, width y %
     GRID_CENTRES = (((0.270,0.320),0.490,0.290,0.12,0.08),  # 2x2
                     ((0.190,0.265),0.320,0.190,0.08,0.06),  # 3x3
-                    ((0.145,0.240),0.245,0.145,0.06,0.04))  # 4x4
+                    ((0.141,0.247),0.248,0.144,0.06,0.04))  # 4x4
+    RESET_BUTTON = (0.306,0.95)
 
     def __init__(self, screenCoords):
         self.topLeft = [screenCoords[0], screenCoords[1]]
         self.height = screenCoords[3] - screenCoords[1]
         self.width = screenCoords[2] - screenCoords[0]
 
+    # Takes a screenshot of the screen region
     def getScreenImage(self):
         return pyautogui.screenshot(region=(*self.topLeft, self.width, self.height))
+
+    # Checks if the entered solution was correct and we're at the level complete scene
+    def checkLevelComplete(self):
+        return self.getScreenRatio() < 0.8
+
+    # Gets screen ratio of whiteness
+    def getScreenRatio(self):
+        # Get screenshot of game state
+        image = self.getScreenImage()
+
+        # Convert image to grayscale
+        grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+
+        # Get height and width
+        height, width = grayImage.shape
+
+        # Get threshold ratio of the game screen and compare it to the expected
+        _, threshold = cv2.threshold(grayImage, 190, 255, cv2.THRESH_BINARY)
+        return cv2.countNonZero(threshold) / float((height * width))
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
@@ -37,10 +58,12 @@ class Vision:
 
         return numBoxes
 
+    # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
         charText = pytesseract.image_to_string(image, config='-psm 10')
-        outQueue.put((index, charText))
+        outQueue.put((index, charText if charText != '.' else 'P'))
 
+    # Get a list of chars from the image
     def getCharsFromImage(self, image):
         # Get number of boxes in the grid (along one side)
         numBoxes = self.getNumBoxes(image)
@@ -74,11 +97,10 @@ class Vision:
         [p.join() for p in processes]
 
         # Collect and return all char results
-        return sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])
+        return [c[1] for c in sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])]
 
+    # Get a list of word lengths from the image
     def getWordLengthsFromImage(self, image):
-        # TODO(mitch): everything works, just need to get width jump and height jump which varies puzzle to puzzle
-
         # Loop over all possible rows (3)
         words = []
         startY = int(0.804 * self.height)       # Should be a valid y position of first row
@@ -158,22 +180,21 @@ class Vision:
 
         return words
 
+    # Get board state from the current screen
     def getBoardState(self):
         # Get screenshot of game state
         image = self.getScreenImage()
 
-        # Convert image to grayscale and black and white
+        # Convert image to grayscale
         grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
-        
-        Image.fromarray(grayImage).show() 
 
-        # Get list of chars from the board state
+        # Image.fromarray(grayImage).show()
+
+        # Get a list of chars from the board state
         chars = self.getCharsFromImage(grayImage)
-        # print(chars)
 
+        # Get a list of word lengths
         words = self.getWordLengthsFromImage(grayImage)
-        print(words)
 
-
-        while True:
-            pass
+        # Return state
+        return chars, words

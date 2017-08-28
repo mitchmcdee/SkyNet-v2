@@ -9,65 +9,95 @@ from cv_check import GameCompleteCV
 from newCv import Vision
 
 pyautogui.FAILSAFE = True
-
-TESSERACT_PATH = '/usr/local/Cellar/tesseract/3.05.01/bin/tesseract'
-SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
-
-# for 2x2, 3x3, 4x4
-GRID_COORDS = [[[94,218], [270,219], [94,393], [267,394]],
-               [[65,193], [182,190], [299,190], [65,308], [182,309], [298,308], [67,421], [184,424], [299,425]],
-               [[49,173], [141,177], [227,177], [317,175], [55,264], [139,263], [229,264], [314,263], [52,352], [140,352], [229,354], [315,353], [53,440], [139,439], [225,440], [315,442]]]
+RETINA_DISPLAY = True
+SCREEN_COORDS = [0, 46, 730, 1290]      # Mitch's COORDS
 
 def screenshot(left, top, right, bottom):
     width = right - left
     height = bottom - top
     return pyautogui.screenshot(region=(left, top, width, height))
 
-def enterWords(words, speed = 0.15):
-    for word in words:
-        # Move to the start of the word before selecting anything
-        pyautogui.moveTo(word[0][0], word[0][1], speed)
+def enterWord(word, speed = 0.15):
+    # Move to the start of the word before selecting anything
+    pyautogui.moveTo(word[0][0], word[0][1], speed)
 
-        # Hold mouse down for the entire mouse moving sequence
+    # Hold mouse down for the entire mouse moving sequence
+    pyautogui.mouseDown()
+
+    # Move over each letter
+    for letter in word:
+        pyautogui.moveTo(letter[0], letter[1], speed)
         pyautogui.mouseDown()
 
-        # Move over each letter
-        for letter in word:
-            pyautogui.moveTo(letter[0], letter[1], speed)
-            pyautogui.mouseDown()
+    # Release mouse up, move to empty location and sleep for a bit
+    pyautogui.mouseUp()
+    pyautogui.moveTo(500, 500, 0)
+    time.sleep(1)
 
-        # Release mouse up
-        pyautogui.mouseUp()
-        pyautogui.moveTo(500, 500, 0)
-        time.sleep(1)
-
-while True:
-    v = Vision(SCREEN_COORDS)
-    v.getBoardState()
-
+# Play the game!
 while(True):
-    # Get level image
-    levelImage = screenshot(SCREEN_COORDS[0], SCREEN_COORDS[1], SCREEN_COORDS[2], SCREEN_COORDS[3])
-
     # Get level state, coords and word lengths required
-    state, coords, wordLengths = WordbrainCv(TESSERACT_PATH).image_to_state(levelImage)
+    vision = Vision(SCREEN_COORDS)
+    state, wordLengths = vision.getBoardState()
+    print(state, wordLengths)
 
     # Generate solutions
     solutions = solveLevel([c.lower() for c in state], wordLengths)
 
-    for solution in solutions:
+    # Generate mouse grid
+    width = int(math.sqrt(len(state)))
+    grid = Vision.GRID_CENTRES[width - 2]
+    mouseGrid = []
+    for j in range(width):
+        for i in range(width):
+            x = int((grid[0][0] + i * grid[1]) * vision.width)
+            y = int((grid[0][1] + j * grid[2]) * vision.height)
 
-        mouseCoords = [[GRID_COORDS[int(math.sqrt(len(state)))-2][i] for i in s] for s in solution]
-        enterWords(mouseCoords)
+            # if on retina display, halve the mouse resolution due to scaling
+            if RETINA_DISPLAY:
+                x /= 2
+                y /= 2
 
-        time.sleep(2)
-        completeImage = screenshot(SCREEN_COORDS[0], SCREEN_COORDS[1], SCREEN_COORDS[2], SCREEN_COORDS[3])
-        
-        if GameCompleteCV().image_to_gameover(completeImage):
-            time.sleep(3)
+            mouseGrid.append((x, y))
+
+    # Loop over valid solutions to try them all
+    for i in range(len(solutions)):
+        if i >= len(solutions):
             break
 
-        pyautogui.click(112, 612, clicks=3)
+        failed = False
+        # Get mouse coordinates for solution and enter them
+        for word in solutions[i]:
+
+            before = vision.getScreenRatio()
+            enterWord([mouseGrid[i] for i in word])
+            after = vision.getScreenRatio()
+
+            # if the same ratio, the word entered was a bad one, so remove it from all solutions
+            if before == after:
+                failed = True
+                solutions = [s for s in solutions if word not in s]
+                break
+
+        if not failed:
+            # Sleep and check if we've won
+            time.sleep(2)
+            if vision.checkLevelComplete():
+                # Sleep while we wait for game to be over
+                time.sleep(3)
+                break
+
+        # Click the reset button
+        reset = vision.RESET_BUTTON
+        resetWidth = reset[0] * vision.width
+        resetHeight = reset[1] * vision.height
+
+        # if on retina display, halve the mouse resolution due to scaling
+        if RETINA_DISPLAY:
+            resetWidth /= 2
+            resetHeight /= 2
+
+        pyautogui.moveTo(resetWidth, resetHeight)
         pyautogui.mouseDown()
         pyautogui.mouseUp()
         time.sleep(2)
