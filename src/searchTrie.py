@@ -12,7 +12,7 @@ from itertools import chain
 #################
 
 # Setup logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Additionally log to stdout
