@@ -2,6 +2,7 @@ import numpy as np
 import pyautogui
 import cv2
 import pytesseract
+from multiprocessing import Process, Queue
 from PIL import Image
 
 class Vision:
@@ -37,6 +38,43 @@ class Vision:
 
         return numBoxes
 
+    def getCharFromImage(self, index, image, outQueue):
+        charText = pytesseract.image_to_string(image, config='-psm 10')
+        outQueue.put((index, charText))
+
+    def getCharsFromImage(self, image, numBoxes):
+        # Get grid centres and calculate their char widths
+        grid = Vision.GRID_CENTRES[numBoxes - 1]
+        width = (int(grid[3] * 2 * self.width), int(grid[4] * 2 * self.height))
+
+        # Loop over each box in the grid and get its charImage
+        state = []
+        for j in range(numBoxes):
+            for i in range(numBoxes):
+                # Calculate top left coordinate for the current box
+                topLeft = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
+                topLeft[0] = int((topLeft[0] + i * grid[1]) * self.width)
+                topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
+
+                # Get image of char and save it to the state
+                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
+                state.append(Image.fromarray(charImage))
+
+        # Loop over each char image and spawn a process to get its char form
+        outQueue = Queue()
+        processes = []
+        for i in range(len(state)):
+            process = Process(target=self.getCharFromImage, args=(i, state[i], outQueue))
+            processes.append(process)
+            process.start()
+
+        # Wait for pytesseract processes to finish
+        for process in processes:
+            process.join()
+
+        # Collect and return all char results
+        return sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])
+
     def getBoardState(self):
         # Get screenshot of game state
         image = self.getScreenImage()
@@ -47,28 +85,10 @@ class Vision:
         # Get number of boxes in the grid (along one side)
         numBoxes = self.getNumBoxes(grayImage)
 
-        print(numBoxes)
+        # Get list of chars from the board state
+        chars = self.getCharsFromImage(grayImage, numBoxes)
 
-        # Get grid centres and calculate their char widths
-        grid = Vision.GRID_CENTRES[numBoxes - 1]
-        width = (int(grid[3] * 2 * self.width), int(grid[4] * 2 * self.height))
-
-        # Loop over each box in the grid and get its char
-        state = []
-        for j in range(numBoxes):
-            for i in range(numBoxes):
-                # Calculate top left coordinate for the current box
-                topLeft = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
-                topLeft[0] = int((topLeft[0] + i * grid[1]) * self.width)
-                topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
-
-                # Get image of char
-                char = grayImage[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
-
-                # Get text representation of char and save it to the state
-                state.append(pytesseract.image_to_string(Image.fromarray(char), config='-psm 10'))
-                
-        print(state)
+        print(chars)
         Image.fromarray(grayImage).show()
 
         while True:

@@ -6,22 +6,17 @@ from PIL import Image
 from searchTrie import solveLevel
 from cv import WordbrainCv
 from cv_check import GameCompleteCV
+from newCv import Vision
 
 pyautogui.FAILSAFE = True
 
 TESSERACT_PATH = '/usr/local/Cellar/tesseract/3.05.01/bin/tesseract'
 SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
 
-# for 2x2, 3x3
+# for 2x2, 3x3, 4x4
 GRID_COORDS = [[[94,218], [270,219], [94,393], [267,394]],
                [[65,193], [182,190], [299,190], [65,308], [182,309], [298,308], [67,421], [184,424], [299,425]],
                [[49,173], [141,177], [227,177], [317,175], [55,264], [139,263], [229,264], [314,263], [52,352], [140,352], [229,354], [315,353], [53,440], [139,439], [225,440], [315,442]]]
-
-# TEST_STATE = [['e','g','g','t','e','n','s','i','n'], [6,3]]
-# TEST_STATE = [['d','o','o','r','r','a','p','o','a','o','b','u','l','v','c','f'], [8,4,4]]
-# TEST_STATE = [['e','n','r','d','l','o','c','o','h','b','a','t','r','t','r','e'], [6,5,5]]
-# TEST_STATE = [['s','i','o','s','h','t','m','r','k','c','r','o','a','a','t','t','h','n','e','a','b','a','p','p','f'], [5,3,3,8,6]]
-# TEST_STATE = [['b','g','r','t','e','k','l','a','e','e','r','c','c','t','r','w','h','i','t','e','r','e','o','b','u','e','r','s','h','g','b','i','r','g','l','i'], [6,7,6,7,5,5]]
 
 def screenshot(left, top, right, bottom):
     width = right - left
@@ -46,14 +41,16 @@ def enterWords(words, speed = 0.15):
         pyautogui.moveTo(500, 500, 0)
         time.sleep(1)
 
+while True:
+    v = Vision(SCREEN_COORDS)
+    v.getBoardState()
+
 while(True):
     # Get level image
     levelImage = screenshot(SCREEN_COORDS[0], SCREEN_COORDS[1], SCREEN_COORDS[2], SCREEN_COORDS[3])
 
     # Get level state, coords and word lengths required
     state, coords, wordLengths = WordbrainCv(TESSERACT_PATH).image_to_state(levelImage)
-
-    print(state, wordLengths)
 
     # Generate solutions
     solutions = solveLevel([c.lower() for c in state], wordLengths)
