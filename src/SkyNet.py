@@ -4,9 +4,7 @@ import sys
 import math
 from PIL import Image
 from searchTrie import solveLevel
-from cv import WordbrainCv
-from cv_check import GameCompleteCV
-from newCv import Vision
+from Vision import Vision
 
 pyautogui.FAILSAFE = True
 RETINA_DISPLAY = True
@@ -20,16 +18,15 @@ def screenshot(left, top, right, bottom):
 def enterWord(word, speed = 0.15):
     # Move to the start of the word before selecting anything
     pyautogui.moveTo(word[0][0], word[0][1], speed)
-
-    # Hold mouse down for the entire mouse moving sequence
     pyautogui.mouseDown()
 
     # Move over each letter
     for letter in word:
+        pyautogui.mouseDown()
         pyautogui.moveTo(letter[0], letter[1], speed)
         pyautogui.mouseDown()
 
-    # Release mouse up, move to empty location and sleep for a bit
+    # Release mouse up, move to empty location and sleep for a bit while blocks fall into place
     pyautogui.mouseUp()
     pyautogui.moveTo(500, 500, 0)
     time.sleep(1)
@@ -68,7 +65,6 @@ while(True):
         failed = False
         # Get mouse coordinates for solution and enter them
         for word in solutions[i]:
-
             before = vision.getScreenRatio()
             enterWord([mouseGrid[i] for i in word])
             after = vision.getScreenRatio()
@@ -79,13 +75,12 @@ while(True):
                 solutions = [s for s in solutions if word not in s]
                 break
 
-        if not failed:
-            # Sleep and check if we've won
-            time.sleep(2)
-            if vision.checkLevelComplete():
-                # Sleep while we wait for game to be over
-                time.sleep(3)
-                break
+        # Sleep and check if we've won
+        time.sleep(2)
+        if not failed and vision.checkLevelComplete():
+            # Sleep while we wait for game to be over
+            time.sleep(3)
+            break
 
         # Click the reset button
         reset = vision.RESET_BUTTON

@@ -105,7 +105,7 @@ class Vision:
         words = []
         startY = int(0.804 * self.height)       # Should be a valid y position of first row
         topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
-        for _ in range(3):
+        for _ in range(2):                      # TODO(mitch): make this work for 3
             # Find the first word's left edge
             x = 0
             while x < image.shape[1]:
@@ -153,7 +153,7 @@ class Vision:
                         if pixel < 100 and not lowFlag:
                             lowFlag = True
                         elif pixel > 100 and lowFlag:
-                            heightJump = i - y + 2 # Offset to account for height of cell
+                            heightJump = i - y + 3 # Offset to account for height of cell
                             break
 
                     break
