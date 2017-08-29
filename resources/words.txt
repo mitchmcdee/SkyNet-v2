@@ -247,6 +247,8 @@ log
 lollipop
 loop
 lorry
+man
+manager
 magnet
 mail
 mailbox
@@ -307,6 +309,7 @@ padlock
 paint
 painter
 palm
+pan
 pancake
 panda
 panties
@@ -333,6 +336,7 @@ pipe
 pirate
 plane
 planet
+plant
 plate
 pliers
 plum

@@ -1,19 +1,15 @@
+#!/usr/bin/env python3
 import pyautogui
 import time
 import sys
 import math
 from PIL import Image
-from searchTrie import solveLevel
+from Solver import Solver
 from Vision import Vision
 
 pyautogui.FAILSAFE = True
 RETINA_DISPLAY = True
 SCREEN_COORDS = [0, 46, 730, 1290]      # Mitch's COORDS
-
-def screenshot(left, top, right, bottom):
-    width = right - left
-    height = bottom - top
-    return pyautogui.screenshot(region=(left, top, width, height))
 
 def enterWord(word, speed = 0.15):
     # Move to the start of the word before selecting anything
@@ -28,18 +24,22 @@ def enterWord(word, speed = 0.15):
 
     # Release mouse up, move to empty location and sleep for a bit while blocks fall into place
     pyautogui.mouseUp()
-    pyautogui.moveTo(500, 500, 0)
-    time.sleep(1)
+    pyautogui.moveTo(SCREEN_COORDS[0], SCREEN_COORDS[1], 0)
+    pyautogui.mouseDown()
+    pyautogui.mouseUp()
+    time.sleep(1.5)
+
+vision = Vision(SCREEN_COORDS)
+solver = Solver()
 
 # Play the game!
 while(True):
     # Get level state, coords and word lengths required
-    vision = Vision(SCREEN_COORDS)
     state, wordLengths = vision.getBoardState()
     print(state, wordLengths)
 
     # Generate solutions
-    solutions = solveLevel([c.lower() for c in state], wordLengths)
+    solutions = solver.solveLevel([c.lower() for c in state], wordLengths)
 
     # Generate mouse grid
     width = int(math.sqrt(len(state)))
