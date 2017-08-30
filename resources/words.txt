@@ -296,6 +296,7 @@ nurse
 nut
 oar
 odd
+officer
 olive
 onion
 onions
