@@ -32,26 +32,27 @@ def enterWord(word, speed=0):
 vision = Vision(SCREEN_COORDS)
 solver = Solver()
 
-def clickReset():
-    # Click the reset button
-    reset = vision.RESET_BUTTON
-    resetWidth = reset[0] * vision.width
-    resetHeight = reset[1] * vision.height
+# Click the button at the given relative width and height
+def clickButton(widthPercentage, heightPercentage):
+    width = widthPercentage * vision.width
+    height = heightPercentage * vision.height
 
     # if on retina display, halve the mouse resolution due to scaling
     if RETINA_DISPLAY:
-        resetWidth /= 2
-        resetHeight /= 2
+        width /= 2
+        height /= 2
 
-    pyautogui.moveTo(resetWidth, resetHeight)
+    pyautogui.moveTo(width, height)
     pyautogui.mouseDown()
     pyautogui.mouseUp()
-    time.sleep(1.5)
 
 # Play the game!
 while(True):
     # Ensure window has focus by clicking it
     pyautogui.click(0, SCREEN_COORDS[1], 3)
+
+    # Wait for any transitions to finish
+    time.sleep(1)
 
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
@@ -59,8 +60,9 @@ while(True):
     print(state, wordLengths)
 
     # Check state is reasonable
-    if width ** 2 != len(state) or sum(wordLengths) != len(state):
-        clickReset()
+    if width == 0 or len(wordLengths) == 0 or width ** 2 != len(state) or sum(wordLengths) != len(state):
+        clickButton(*vision.AD_BUTTON)
+        clickButton(*vision.RESET_BUTTON)
         continue
 
     # Generate solutions
@@ -101,7 +103,7 @@ while(True):
 
         # Check if failed
         if failed:
-            clickReset()
+            clickButton(*vision.RESET_BUTTON)
             continue
 
         # Sleep and check if we've won
@@ -112,4 +114,4 @@ while(True):
             break
 
         # If we haven't won, click reset
-        clickReset()
+        clickButton(*vision.RESET_BUTTON)

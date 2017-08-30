@@ -10,7 +10,8 @@ class Vision:
     GRID_CENTRES = (((0.270,0.320),0.490,0.290,0.12,0.08),  # 2x2
                     ((0.190,0.265),0.320,0.190,0.08,0.06),  # 3x3
                     ((0.141,0.247),0.248,0.144,0.06,0.04))  # 4x4
-    RESET_BUTTON =  (0.306,0.95)                            # Location of reset button
+    RESET_BUTTON =  (0.306,0.950)                           # Location of reset button
+    AD_BUTTON =     (0.960,0.078)                           # Location of close ad button
 
     def __init__(self, screenCoords):
         self.topLeft = [screenCoords[0], screenCoords[1]]
@@ -84,6 +85,10 @@ class Vision:
         # Get number of boxes in the grid (along one side)
         numBoxes = self.getNumBoxes(image)
 
+        # If out of range, return empty list of chars
+        if numBoxes - 2 >= len(Vision.GRID_CENTRES):
+            return []
+
         # Get grid centres and calculate their char widths
         grid = Vision.GRID_CENTRES[numBoxes - 2]
         width = (int(grid[3] * 2 * self.width), int(grid[4] * 2 * self.height))
@@ -121,6 +126,8 @@ class Vision:
         words = []
         startY = int(0.804 * self.height)       # Should be a valid y position of first row
         topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
+        widthJump = int(0.1 * self.width)       # Should be a valid width jump for now
+        heightJump = int(0.07 * self.height) # Should be a valid height jump for now
         for _ in range(2):                      # TODO(mitch): make this work for 3
             # Find the first word's left edge
             x = 0
@@ -132,7 +139,7 @@ class Vision:
 
                     # Find the width of a letter box
                     lowFlag = False
-                    for i in range(x, x + int(0.1 * self.width)): # Should be a valid width jump for now
+                    for i in range(x, x + widthJump):
                         pixel = image[startY][i]
 
                         # If we've hit a low pixel then see high again, we have hit another edge and know the width
@@ -162,7 +169,7 @@ class Vision:
 
                     # Find the height of a letter box
                     lowFlag = False
-                    for i in range(y, y + int(0.07 * self.height)): # Should be a valid height jump for now
+                    for i in range(y, y + heightJump):
                         pixel = image[i][x]
 
                         # If we've hit a low pixel then see high again, we have hit another edge and know the height
