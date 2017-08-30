@@ -9,7 +9,8 @@ class Vision:
     # topleft coord %, mid distance x %, mid distance y %, width x %, width y %
     GRID_CENTRES = (((0.270,0.320),0.490,0.290,0.12,0.08),  # 2x2
                     ((0.190,0.265),0.320,0.190,0.08,0.06),  # 3x3
-                    ((0.141,0.247),0.248,0.144,0.06,0.04))  # 4x4
+                    ((0.141,0.247),0.248,0.144,0.06,0.04),  # 4x4
+                    ((0.115,0.232),0.195,0.114,0.04,0.025)) # 5x5
     RESET_BUTTON =  (0.306,0.950)                           # Location of reset button
     AD_BUTTON =     (0.960,0.078)                           # Location of close ad button
 
@@ -77,8 +78,13 @@ class Vision:
 
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
-        charText = pytesseract.image_to_string(image, config='-psm 10')
-        outQueue.put((index, charText if charText != '.' else 'P'))
+        charText = pytesseract.image_to_string(image, config='-psm 10').upper()
+
+        # Some simple edge case substitutions
+        charText = 'P' if charText == '.' else charText
+        charText = 'O' if charText == '0' else charText
+
+        outQueue.put((index, charText))
 
     # Get a list of chars from the image
     def getCharsFromImage(self, image):

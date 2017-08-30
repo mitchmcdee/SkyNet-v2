@@ -94,6 +94,8 @@ while(True):
             before = vision.getBoardRatio()
             enterWord([mouseGrid[i] for i in word])
             after = vision.getBoardRatio()
+            print(before)
+            print(after)
 
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
             if round(before, 3) == round(after, 3):
