@@ -183,6 +183,10 @@ class Vision:
 
                 y += 1
 
+            # Check that y isn't at the bottom edge of the screen (aka failed to find a letter)
+            if y == image.shape[0]:
+                break
+
             # Calculate the topY and startY for the next row
             topY = y + heightJump
             startY = topY + heightJump // 2
