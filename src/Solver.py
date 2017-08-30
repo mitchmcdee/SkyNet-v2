@@ -1,24 +1,20 @@
-import pickle
 import sys
 import os
 from Trie import Trie, TrieNode
 from State import State, StateNode
 
 class Solver:
-    def __init__(self):
-        # Check .pickle file
-        if not os.path.exists('../resources/words.pickle'):
-            print('Must generate a words.pickle file')
-            sys.exit(0)
-
-        # Load .pickle file
-        with open('../resources/words.pickle', 'rb') as f:
-            self.trie = pickle.load(f)
-
-        # Check Trie was valid
-        if self.trie is None:
-            print('There was a problem loading in the .pickle file')
-            sys.exit(0)
+    def __init__(self, wordLengths):
+        # Generate Trie
+        self.trie = Trie()
+        numWords = 0
+        for length in list(set(wordLengths)):
+            print('Adding words of length ', length)
+            # Loop over words in the file an add them to the Trie
+            with open('../resources/' + str(length) + '.txt', 'r') as f:
+                for word in f:
+                    numWords += self.trie.addWord(word.strip('\n'))
+        print('Added ', numWords, ' words to trie')
 
     # Solve the current board state
     def solveState(self, state, trie, currentPath=[]):

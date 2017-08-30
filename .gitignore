@@ -1,10 +1,4 @@
-*.idea
 *.prof
 *.pyc
 __pycache__/
-*.pickle
 .venv/
-temp/
-*.png
-src/temp
-src/test
