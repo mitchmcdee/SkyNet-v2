@@ -132,7 +132,7 @@ class Vision:
         topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
         widthJump = int(0.1 * self.width)       # Should be a valid width jump for now
         heightJump = int(0.07 * self.height) # Should be a valid height jump for now
-        
+
         # Loop over all possible rows (3)
         words = []
         for _ in range(3):
@@ -153,8 +153,9 @@ class Vision:
                             # If we've hit a low pixel then see high again, we have hit another edge and know the width
                             if pixel < 80 and not lowFlag:
                                 lowFlag = True
+                                gapWidth = (i - x) // 2
                             elif pixel >= 80 and lowFlag:
-                                widthJump = i - x + 3 # Offset to account for width of cell
+                                widthJump = i - x + gapWidth
                                 break
 
                         # Add half the width of a word box
@@ -194,8 +195,9 @@ class Vision:
                         # If we've hit a low pixel then see high again, we have hit another edge and know the height
                         if pixel < 80 and not lowFlag:
                             lowFlag = True
+                            gapHeight = i - y
                         elif pixel >= 80 and lowFlag:
-                            heightJump = i - y + 3 # Offset to account for height of cell
+                            heightJump = i - y + gapHeight
                             break
 
                     break
@@ -213,15 +215,17 @@ class Vision:
             # Loop over potential letter locations to build words
             wordLength = 0
             for i in range(x, image.shape[1], widthJump):
-                pixel = max([image[y+j][i] for j in range(-1,5)])
+                pixel = max([image[y+j][i] for j in range(5)])
 
                 # Check if we've found a white edge
                 if pixel >= 80:
                     wordLength += 1
+                    print(i,y,pixel,' inc')
 
                 # If we didn't find one, check the word we're adding is of valid length
                 elif wordLength >= 2:
                     words.append(wordLength)
+                    print(i,y,pixel,' added')
                     wordLength = 0
 
             # Check any left over words
