@@ -11,8 +11,9 @@ pyautogui.FAILSAFE = True
 RETINA_DISPLAY = True
 SCREEN_COORDS = [0, 46, 730, 1290]      # Mitch's COORDS
 
-def enterWord(word, speed = 0.15):
+def enterWord(word, speed=0):
     # Move to the start of the word before selecting anything
+    pyautogui.mouseUp()
     pyautogui.moveTo(word[0][0], word[0][1], speed)
     pyautogui.mouseDown()
 
@@ -22,27 +23,50 @@ def enterWord(word, speed = 0.15):
         pyautogui.moveTo(letter[0], letter[1], speed)
         pyautogui.mouseDown()
 
-    # Release mouse up, move to empty location and sleep for a bit while blocks fall into place
+    # Release mouse up and move to empty location
     pyautogui.mouseUp()
-    pyautogui.moveTo(SCREEN_COORDS[0], SCREEN_COORDS[1], 0)
+    pyautogui.moveTo(0, SCREEN_COORDS[1], 0)
     pyautogui.mouseDown()
     pyautogui.mouseUp()
-    time.sleep(1.5)
 
 vision = Vision(SCREEN_COORDS)
 solver = Solver()
 
+def clickReset():
+    # Click the reset button
+    reset = vision.RESET_BUTTON
+    resetWidth = reset[0] * vision.width
+    resetHeight = reset[1] * vision.height
+
+    # if on retina display, halve the mouse resolution due to scaling
+    if RETINA_DISPLAY:
+        resetWidth /= 2
+        resetHeight /= 2
+
+    pyautogui.moveTo(resetWidth, resetHeight)
+    pyautogui.mouseDown()
+    pyautogui.mouseUp()
+    time.sleep(1.5)
+
 # Play the game!
 while(True):
-    # Get level state, coords and word lengths required
+    # Ensure window has focus by clicking it
+    pyautogui.click(0, SCREEN_COORDS[1], 3)
+
+    # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
+    width = int(math.sqrt(len(state)))
     print(state, wordLengths)
+
+    # Check state is reasonable
+    if width ** 2 != len(state) or sum(wordLengths) != len(state):
+        clickReset()
+        continue
 
     # Generate solutions
     solutions = solver.solveLevel([c.lower() for c in state], wordLengths)
 
     # Generate mouse grid
-    width = int(math.sqrt(len(state)))
     grid = Vision.GRID_CENTRES[width - 2]
     mouseGrid = []
     for j in range(width):
@@ -65,34 +89,27 @@ while(True):
         failed = False
         # Get mouse coordinates for solution and enter them
         for word in solutions[i]:
-            before = vision.getScreenRatio()
+            before = vision.getBoardRatio()
             enterWord([mouseGrid[i] for i in word])
-            after = vision.getScreenRatio()
+            after = vision.getBoardRatio()
 
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
-            if before == after:
+            if round(before, 3) == round(after, 3):
                 failed = True
-                solutions = [s for s in solutions if word not in s]
+                solutions = [s for s in solutions if [state[letter] for letter in word] not in [[state[l] for l in w] for w in s]]
                 break
 
+        # Check if failed
+        if failed:
+            clickReset()
+            continue
+
         # Sleep and check if we've won
-        time.sleep(2)
+        time.sleep(1)
         if not failed and vision.checkLevelComplete():
             # Sleep while we wait for game to be over
-            time.sleep(3)
+            time.sleep(3.5)
             break
 
-        # Click the reset button
-        reset = vision.RESET_BUTTON
-        resetWidth = reset[0] * vision.width
-        resetHeight = reset[1] * vision.height
-
-        # if on retina display, halve the mouse resolution due to scaling
-        if RETINA_DISPLAY:
-            resetWidth /= 2
-            resetHeight /= 2
-
-        pyautogui.moveTo(resetWidth, resetHeight)
-        pyautogui.mouseDown()
-        pyautogui.mouseUp()
-        time.sleep(2)
+        # If we haven't won, click reset
+        clickReset()

@@ -10,7 +10,7 @@ class Vision:
     GRID_CENTRES = (((0.270,0.320),0.490,0.290,0.12,0.08),  # 2x2
                     ((0.190,0.265),0.320,0.190,0.08,0.06),  # 3x3
                     ((0.141,0.247),0.248,0.144,0.06,0.04))  # 4x4
-    RESET_BUTTON = (0.306,0.95)
+    RESET_BUTTON =  (0.306,0.95)                            # Location of reset button
 
     def __init__(self, screenCoords):
         self.topLeft = [screenCoords[0], screenCoords[1]]
@@ -38,6 +38,22 @@ class Vision:
 
         # Get threshold ratio of the game screen and compare it to the expected
         _, threshold = cv2.threshold(grayImage, 190, 255, cv2.THRESH_BINARY)
+        return cv2.countNonZero(threshold) / float((height * width))
+
+    # Gets board ratio of whiteness
+    def getBoardRatio(self):
+        # Get screenshot of game state
+        image = self.getScreenImage()
+
+        # Convert image to grayscale and crop it
+        grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        croppedImage = grayImage[int(0.170 * self.height) : int(0.750 * self.height),:]
+
+        # Get height and width
+        height, width = croppedImage.shape
+
+        # Get threshold ratio of the game screen and compare it to the expected
+        _, threshold = cv2.threshold(croppedImage, 190, 255, cv2.THRESH_BINARY)
         return cv2.countNonZero(threshold) / float((height * width))
 
     # Scan first row in grid and return the number of boxes found
