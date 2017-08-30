@@ -128,13 +128,14 @@ class Vision:
 
     # Get a list of word lengths from the image
     def getWordLengthsFromImage(self, image):
-        # Loop over all possible rows (3)
-        words = []
         startY = int(0.790 * self.height)       # Should be a valid y position of first row
         topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
         widthJump = int(0.1 * self.width)       # Should be a valid width jump for now
         heightJump = int(0.07 * self.height) # Should be a valid height jump for now
-        for _ in range(3):                      # TODO(mitch): make this work for 3
+        
+        # Loop over all possible rows (3)
+        words = []
+        for _ in range(3):
             # Find the first word's left edge, have two attempts at finding first row
             for i in range(2):
                 x = 0
@@ -162,10 +163,16 @@ class Vision:
 
                     x += 1
 
+                # If we're not at the right edge of screen, we've found the first row of words!
                 if x != image.shape[1]:
                     break
 
+                # If we didn't find first row, increment starting Y slightly such that we can hit it
                 startY += heightJump // 2
+
+                # If we've overshot the starting Y, break and quit
+                if startY >= image.shape[0]:
+                    break
 
             # Check that x isn't at the right edge of the screen (aka failed to find a row)
             if x == image.shape[1]:

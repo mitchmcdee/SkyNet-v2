@@ -31,7 +31,6 @@ def enterWord(word, speed=0):
     pyautogui.mouseUp()
 
 vision = Vision(SCREEN_COORDS)
-solver = Solver()
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage):
@@ -67,6 +66,7 @@ while(True):
         continue
 
     # Generate solutions
+    solver = Solver(wordLengths)
     solutions = solver.solveLevel([c.lower() for c in state], wordLengths)
 
     # Generate mouse grid
