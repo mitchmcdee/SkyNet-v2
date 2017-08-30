@@ -10,6 +10,7 @@ from Vision import Vision
 pyautogui.FAILSAFE = True
 RETINA_DISPLAY = True
 SCREEN_COORDS = [0, 46, 730, 1290]      # Mitch's COORDS
+MENUBAR_HEIGHT = 44                     # Mitch's menubar height
 
 def enterWord(word, speed=0):
     # Move to the start of the word before selecting anything
@@ -74,7 +75,7 @@ while(True):
     for j in range(width):
         for i in range(width):
             x = int((grid[0][0] + i * grid[1]) * vision.width)
-            y = int((grid[0][1] + j * grid[2]) * vision.height)
+            y = int((grid[0][1] + j * grid[2]) * vision.height) + MENUBAR_HEIGHT
 
             # if on retina display, halve the mouse resolution due to scaling
             if RETINA_DISPLAY:
@@ -94,8 +95,6 @@ while(True):
             before = vision.getBoardRatio()
             enterWord([mouseGrid[i] for i in word])
             after = vision.getBoardRatio()
-            print(before)
-            print(after)
 
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
             if round(before, 3) == round(after, 3):

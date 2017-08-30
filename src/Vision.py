@@ -7,12 +7,12 @@ from PIL import Image
 
 class Vision:
     # topleft coord %, mid distance x %, mid distance y %, width x %, width y %
-    GRID_CENTRES = (((0.270,0.320),0.490,0.290,0.12,0.08),  # 2x2
-                    ((0.190,0.265),0.320,0.190,0.08,0.06),  # 3x3
-                    ((0.141,0.247),0.248,0.144,0.06,0.04),  # 4x4
-                    ((0.115,0.232),0.195,0.114,0.04,0.025)) # 5x5
-    RESET_BUTTON =  (0.306,0.950)                           # Location of reset button
-    AD_BUTTON =     (0.960,0.078)                           # Location of close ad button
+    GRID_CENTRES = (((0.270,0.320),0.490,0.2900,0.120,0.080),  # 2x2
+                    ((0.190,0.265),0.320,0.1900,0.080,0.060),  # 3x3
+                    ((0.141,0.247),0.248,0.1440,0.060,0.040),  # 4x4
+                    ((0.115,0.234),0.192,0.1125,0.045,0.025))  # 5x5
+    RESET_BUTTON =  (0.306,0.950)                              # Location of reset button
+    AD_BUTTON =     (0.960,0.078)                              # Location of close ad button
 
     def __init__(self, screenCoords):
         self.topLeft = [screenCoords[0], screenCoords[1]]
@@ -67,11 +67,11 @@ class Vision:
         for x in range(0, image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel > 100 and blackFlag:       # we found a white grid!
+            if pixel >= 80 and blackFlag:       # we found a white grid!
                 blackFlag = False
                 numBoxes += 1
 
-            if pixel < 100 and not blackFlag:   # we found the end of the grid
+            if pixel < 80 and not blackFlag:   # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -130,36 +130,42 @@ class Vision:
     def getWordLengthsFromImage(self, image):
         # Loop over all possible rows (3)
         words = []
-        startY = int(0.804 * self.height)       # Should be a valid y position of first row
+        startY = int(0.790 * self.height)       # Should be a valid y position of first row
         topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
         widthJump = int(0.1 * self.width)       # Should be a valid width jump for now
         heightJump = int(0.07 * self.height) # Should be a valid height jump for now
-        for _ in range(2):                      # TODO(mitch): make this work for 3
-            # Find the first word's left edge
-            x = 0
-            while x < image.shape[1]:
-                pixel = image[startY][x]
+        for _ in range(3):                      # TODO(mitch): make this work for 3
+            # Find the first word's left edge, have two attempts at finding first row
+            for i in range(2):
+                x = 0
+                while x < image.shape[1]:
+                    pixel = image[startY][x]
 
-                # Check if we've found the left edge
-                if pixel > 100:
+                    # Check if we've found the left edge
+                    if pixel >= 80:
 
-                    # Find the width of a letter box
-                    lowFlag = False
-                    for i in range(x, x + widthJump):
-                        pixel = image[startY][i]
+                        # Find the width of a letter box
+                        lowFlag = False
+                        for i in range(x, x + widthJump):
+                            pixel = image[startY][i]
 
-                        # If we've hit a low pixel then see high again, we have hit another edge and know the width
-                        if pixel < 100 and not lowFlag:
-                            lowFlag = True
-                        elif pixel > 100 and lowFlag:
-                            widthJump = i - x + 3 # Offset to account for width of cell
-                            break
+                            # If we've hit a low pixel then see high again, we have hit another edge and know the width
+                            if pixel < 80 and not lowFlag:
+                                lowFlag = True
+                            elif pixel >= 80 and lowFlag:
+                                widthJump = i - x + 3 # Offset to account for width of cell
+                                break
 
-                    # Add half the width of a word box
-                    x += widthJump // 2
+                        # Add half the width of a word box
+                        x += widthJump // 2
+                        break
+
+                    x += 1
+
+                if x != image.shape[1]:
                     break
 
-                x += 1
+                startY += heightJump // 2
 
             # Check that x isn't at the right edge of the screen (aka failed to find a row)
             if x == image.shape[1]:
@@ -171,7 +177,7 @@ class Vision:
                 pixel = image[y][x]
 
                 # Check if we've found a white edge
-                if pixel > 100:
+                if pixel >= 80:
 
                     # Find the height of a letter box
                     lowFlag = False
@@ -179,9 +185,9 @@ class Vision:
                         pixel = image[i][x]
 
                         # If we've hit a low pixel then see high again, we have hit another edge and know the height
-                        if pixel < 100 and not lowFlag:
+                        if pixel < 80 and not lowFlag:
                             lowFlag = True
-                        elif pixel > 100 and lowFlag:
+                        elif pixel >= 80 and lowFlag:
                             heightJump = i - y + 3 # Offset to account for height of cell
                             break
 
@@ -200,16 +206,20 @@ class Vision:
             # Loop over potential letter locations to build words
             wordLength = 0
             for i in range(x, image.shape[1], widthJump):
-                pixel = max([image[y+j][i] for j in range(10)])
+                pixel = max([image[y+j][i] for j in range(-1,5)])
 
                 # Check if we've found a white edge
-                if pixel > 100:
+                if pixel >= 80:
                     wordLength += 1
 
                 # If we didn't find one, check the word we're adding is of valid length
                 elif wordLength >= 2:
                     words.append(wordLength)
                     wordLength = 0
+
+            # Check any left over words
+            if wordLength >= 2:
+                words.append(wordLength)
 
         return words
 
