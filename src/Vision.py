@@ -153,7 +153,7 @@ class Vision:
                             # If we've hit a low pixel then see high again, we have hit another edge and know the width
                             if pixel < 80 and not lowFlag:
                                 lowFlag = True
-                                gapWidth = (i - x) // 2
+                                gapWidth = i - x
                             elif pixel >= 80 and lowFlag:
                                 widthJump = i - x + gapWidth
                                 break
