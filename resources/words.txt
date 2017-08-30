@@ -343,6 +343,7 @@ plum
 poison
 porridge
 postcard
+pot
 potato
 prism
 profit
