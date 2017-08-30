@@ -85,6 +85,7 @@ chin
 church
 clam
 clown
+clothing
 coconut
 collar
 comb
@@ -326,6 +327,7 @@ pencil
 pepper
 percent
 period
+pet
 petal
 piano
 picture
@@ -472,6 +474,7 @@ toilet
 tomato
 tongue
 tooth
+toy
 tree
 tricycle
 triplets
