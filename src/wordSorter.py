@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import os
 
+BASE = '../resources/'
+
 # Dictionary holding word lists
 words = {}
 
 # Root file containing words of various lengths
-with open('goodWords.txt', 'r') as f:
+with open(BASE + 'bigWords.txt', 'r') as f:
     for line in f:
         word = line.strip('\n')
         length = str(len(word))
@@ -18,12 +20,12 @@ with open('goodWords.txt', 'r') as f:
 
 # Remove old word files
 for i in range(20):
-    path = str(i) + '.txt'
+    path = BASE + str(i) + '.txt'
     if os.path.exists(path):
         os.remove(path)
 
 # Add new word files
 for i,length in words.items():
-    with open(i + '.txt', 'w') as f:
+    with open(BASE + i + '.txt', 'w') as f:
         for word in sorted(length):
             f.write(word + '\n')
