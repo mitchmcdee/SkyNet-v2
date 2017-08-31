@@ -83,6 +83,7 @@ class Vision:
         # Some simple edge case substitutions
         charText = 'P' if charText == '.' else charText
         charText = 'O' if charText == '0' else charText
+        charText = 'B' if charText == ':' else charText
 
         outQueue.put((index, charText))
 
@@ -126,111 +127,83 @@ class Vision:
         # Collect and return all char results
         return [c[1] for c in sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])]
 
+    def getWord(self, image, startX, startY):
+        # Find starting X and letterbox sideLength
+        sideLength = None
+        for x in range(startX, image.shape[1]):
+            pixel = image[startY][x]
+
+            # If black pixel
+            if pixel < 80:
+                continue
+
+            # White edge was found! Let's look for its right edge
+            lowFlag = False
+            for i in range(x, x + int(0.1 * image.shape[1])):
+                pixel = image[startY][i]
+
+                # If black pixel
+                if pixel < 80 and not lowFlag:
+                    lowFlag = True
+                    gapWidth = i - x
+                    continue
+
+                # If low flag has been set, we've found a right edge!
+                if pixel >= 80 and lowFlag:
+                    sideLength = i - x + gapWidth
+                    break
+            break
+
+        # Check we found a sideLength
+        if sideLength is None:
+            return
+
+        # Find top edge
+        for y in reversed(range(0, startY)):
+            # Check if top edge was found
+            if image[y][x + sideLength // 2] >= 80:
+                break
+        else:
+            # Top edge was not found
+            return
+
+        # Count number of letters
+        wordLength = 0
+        for x in range(x + int(sideLength // (5/2)), image.shape[1], sideLength):
+            # If black pixel, end of word
+            if image[y][x] < 80:
+                break
+            wordLength += 1
+
+        # Return word length and its final check position
+        return wordLength, x, sideLength
+
     # Get a list of word lengths from the image
     def getWordLengthsFromImage(self, image):
-        startY = int(0.790 * self.height)       # Should be a valid y position of first row
-        topY = startY - int(0.05 * self.height) # Should be a valid y position above first row
-        widthJump = int(0.1 * self.width)       # Should be a valid width jump for now
-        heightJump = int(0.07 * self.height) # Should be a valid height jump for now
+        top = int(0.75 * self.height)
+        bottom = int(0.90 * self.height)
+        croppedImage = image[top:bottom,:]
 
-        # Loop over all possible rows (3)
+        # Image.fromarray(croppedImage).show()
+
+        startX = 0                                      # Should be a valid x position for start of row
+        startY = int(0.2 * croppedImage.shape[0])       # Should be a valid y position for start of row
+        startJump = int(0.2 * croppedImage.shape[0])    # Should be a valid y jump
+
         words = []
-        for _ in range(3):
-            # Find the first word's left edge, have two attempts at finding first row
-            for i in range(2):
-                x = 0
-                while x < image.shape[1]:
-                    pixel = image[startY][x]
+        while startY < croppedImage.shape[0]:
+            result = self.getWord(croppedImage, startX, startY)
+            print(startX,startY,result)
 
-                    # Check if we've found the left edge
-                    if pixel >= 80:
+            if result is None or result[1] >= croppedImage.shape[1]:
+                startY += startJump
+                startX = 0
+                continue
 
-                        # Find the width of a letter box
-                        lowFlag = False
-                        for i in range(x, x + widthJump):
-                            pixel = image[startY][i]
-
-                            # If we've hit a low pixel then see high again, we have hit another edge and know the width
-                            if pixel < 80 and not lowFlag:
-                                lowFlag = True
-                                gapWidth = i - x
-                            elif pixel >= 80 and lowFlag:
-                                widthJump = i - x + gapWidth
-                                break
-
-                        # Add half the width of a word box
-                        x += widthJump // 2
-                        break
-
-                    x += 1
-
-                # If we're not at the right edge of screen, we've found the first row of words!
-                if x != image.shape[1]:
-                    break
-
-                # If we didn't find first row, increment starting Y slightly such that we can hit it
-                startY += heightJump // 2
-
-                # If we've overshot the starting Y, break and quit
-                if startY >= image.shape[0]:
-                    break
-
-            # Check that x isn't at the right edge of the screen (aka failed to find a row)
-            if x == image.shape[1]:
-                break
-
-            # Find the first word's top edge
-            y = topY
-            while y < image.shape[0]:
-                pixel = image[y][x]
-
-                # Check if we've found a white edge
-                if pixel >= 80:
-
-                    # Find the height of a letter box
-                    lowFlag = False
-                    for i in range(y, y + heightJump):
-                        pixel = image[i][x]
-
-                        # If we've hit a low pixel then see high again, we have hit another edge and know the height
-                        if pixel < 80 and not lowFlag:
-                            lowFlag = True
-                            gapHeight = i - y
-                        elif pixel >= 80 and lowFlag:
-                            heightJump = i - y + gapHeight
-                            break
-
-                    break
-
-                y += 1
-
-            # Check that y isn't at the bottom edge of the screen (aka failed to find a letter)
-            if y == image.shape[0]:
-                break
-
-            # Calculate the topY and startY for the next row
-            topY = y + heightJump
-            startY = topY + heightJump // 2
-
-            # Loop over potential letter locations to build words
-            wordLength = 0
-            for i in range(x, image.shape[1], widthJump):
-                pixel = max([image[y+j][i] for j in range(5)])
-
-                # Check if we've found a white edge
-                if pixel >= 80:
-                    wordLength += 1
-                    print(i,y,pixel,' inc')
-
-                # If we didn't find one, check the word we're adding is of valid length
-                elif wordLength >= 2:
-                    words.append(wordLength)
-                    print(i,y,pixel,' added')
-                    wordLength = 0
-
-            # Check any left over words
-            if wordLength >= 2:
-                words.append(wordLength)
+            wordLength, endX, sideLength = result
+            words.append(wordLength)
+            startX = endX
+            startJump = sideLength
 
         return words
 

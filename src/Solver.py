@@ -16,6 +16,8 @@ class Solver:
                     numWords += self.trie.addWord(word.strip('\n'))
         print('Added ', numWords, ' words to trie')
 
+    #TODO(mitch): generator?
+
     # Solve the current board state
     def solveState(self, state, trie, currentPath=[]):
         # If there are no more word lengths, there's nothing left to solve

@@ -7,10 +7,10 @@ from PIL import Image
 from Solver import Solver
 from Vision import Vision
 
-pyautogui.FAILSAFE = True
-RETINA_DISPLAY = True
-SCREEN_COORDS = [0, 46, 730, 1290]      # Mitch's COORDS
-MENUBAR_HEIGHT = 44                     # Mitch's menubar height
+pyautogui.FAILSAFE = True          # Allows exiting the program by going to the top left of screen
+RETINA_DISPLAY = True              # Mitch has a macbook
+SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
+MENUBAR_HEIGHT = 44                # Mitch's menubar height
 
 def enterWord(word, speed=0):
     # Move to the start of the word before selecting anything
@@ -89,7 +89,6 @@ while(True):
         if i >= len(solutions):
             break
 
-        failed = False
         # Get mouse coordinates for solution and enter them
         for word in solutions[i]:
             before = vision.getBoardRatio()
@@ -100,21 +99,14 @@ while(True):
 
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
             if round(before, 3) == round(after, 3):
-                failed = True
                 solutions = [s for s in solutions if [state[letter] for letter in word] not in [[state[l] for l in w] for w in s]]
                 break
 
-        # Check if failed
-        if failed:
-            clickButton(*vision.RESET_BUTTON)
-            continue
+        # Else if no break, all words in solution were entered, check if in win state
+        else:
+            if vision.checkLevelComplete():
+                time.sleep(3.5) # Sleep while we wait for game to be over
+                break
 
-        # Sleep and check if we've won
-        time.sleep(1)
-        if not failed and vision.checkLevelComplete():
-            # Sleep while we wait for game to be over
-            time.sleep(3.5)
-            break
-
-        # If we haven't won, click reset
+        # A problem occured, reset!
         clickButton(*vision.RESET_BUTTON)
