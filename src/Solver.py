@@ -16,7 +16,8 @@ class Solver:
                     numWords += self.trie.addWord(word.strip('\n'))
         print('Added ', numWords, ' words to trie')
 
-    #TODO(mitch): generator?
+    # TODO(mitch): turn this into a generator
+    # TODO(mitch): use multiprocessing/multithreading?
 
     # Solve the current board state
     def solveState(self, state, trie, currentPath=[]):
@@ -33,7 +34,7 @@ class Solver:
         # Loop over the valid paths and add their solved states
         solutionPaths = []
         for path in validPaths:
-            rv = self.solveState(state.getRemovedWordState(path), trie, currentPath + [path])
+            rv = self.solveState(state.getRemovedPathState(path), trie, currentPath + [path])
             (solutionPaths.extend(rv) if rv else None)
 
         return solutionPaths

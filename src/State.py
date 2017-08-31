@@ -106,8 +106,8 @@ class State():
     def getWord(self, path):
         return ('').join([self.state[i] for i in path])
 
-    # Generate and return a new State that removes the given word
-    def getRemovedWordState(self, path):
+    # Generate and return a new State that removes the given path
+    def getRemovedPathState(self, path):
         newState = deepcopy(self)
 
         # Replace path with underscores (i.e. empty space)

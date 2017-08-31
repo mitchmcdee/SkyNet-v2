@@ -78,13 +78,8 @@ class Vision:
 
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
-        charText = pytesseract.image_to_string(image, config='-psm 10').upper()
-
-        # Some simple edge case substitutions
-        charText = 'P' if charText == '.' else charText
-        charText = 'O' if charText == '0' else charText
-        charText = 'B' if charText == ':' else charText
-
+        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ -l eng'
+        charText = pytesseract.image_to_string(image, config=conf)
         outQueue.put((index, charText))
 
     # Get a list of chars from the image
@@ -193,7 +188,6 @@ class Vision:
         words = []
         while startY < croppedImage.shape[0]:
             result = self.getWord(croppedImage, startX, startY)
-            print(startX,startY,result)
 
             if result is None or result[1] >= croppedImage.shape[1]:
                 startY += startJump
@@ -201,9 +195,10 @@ class Vision:
                 continue
 
             wordLength, endX, sideLength = result
+
             words.append(wordLength)
-            startX = endX
             startJump = sideLength
+            startX = endX
 
         return words
 
