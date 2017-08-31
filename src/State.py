@@ -12,7 +12,7 @@ def quit(reason):
 
 # State of
 class State():
-    def __init__(self, state, wordLengths, path=[]):
+    def __init__(self, state, wordLengths, path=[], words=set()):
         # Side length of the (hopefully) perfect square
         sideLength = sqrt(len(state))
 
@@ -32,6 +32,7 @@ class State():
         self.sideLength = int(sideLength)
         self.wordLengths = wordLengths
         self.path = path
+        self.words = words
 
     # Returns all the children surrounding a given point
     def getChildrenFromPoint(self, pointIndex):
@@ -134,6 +135,7 @@ class State():
         # Remove word length of word that was removed and update path
         newState.wordLengths.remove(len(path))
         newState.path += [path]
+        newState.words.add(self.getWord(path))
         
         return newState
 

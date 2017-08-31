@@ -85,21 +85,18 @@ while(True):
             mouseGrid.append((x, y))
 
     # Loop over valid solutions to try them all
-    for i in range(len(solutions)):
-        if i >= len(solutions):
-            break
-
+    for solution in solutions:
         # Get mouse coordinates for solution and enter them
-        for word in solutions[i]:
+        for path in solution:
             before = vision.getBoardRatio()
-            enterWord([mouseGrid[i] for i in word])
+            enterWord([mouseGrid[i] for i in path])
             after = vision.getBoardRatio()
             print(before)
             print(after)
 
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
-            if round(before, 3) == round(after, 3):
-                solutions = [s for s in solutions if [state[letter] for letter in word] not in [[state[l] for l in w] for w in s]]
+            if round(before, 2) == round(after, 2):
+                solver.addBadWord(('').join([state[i] for i in path]))
                 break
 
         # Else if no break, all words in solution were entered, check if in win state

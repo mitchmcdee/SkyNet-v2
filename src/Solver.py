@@ -4,8 +4,9 @@ from Trie import Trie, TrieNode
 from State import State, StateNode
 
 class Solver:
-    def __init__(self, wordLengths):
-        self.solutions = []
+    def __init__(self, wordLengths, badWords = []):
+        self.badWords = set() # Set of words not to search
+
         # Generate Trie
         self.trie = Trie()
         numWords = 0
@@ -17,17 +18,24 @@ class Solver:
                     numWords += self.trie.addWord(word.strip('\n'))
         print('Added ', numWords, ' words to trie')
 
-    #TODO(mitch): check level 4 of rat
+    def addBadWord(self, word):
+        self.badWords.add(word.lower())
+
+    # TODO(mitch): check level 4 of rat, it breaks word lengths
+    # TODO(mitch): potential optimisation, find valid words first then find their combination?
 
     # Solve the current level
     def solveLevel(self, initialState, wordLengths):
-        solutions = []
         unsolvedStates = [State(initialState, wordLengths)]
         while len(unsolvedStates) != 0:
             state = unsolvedStates.pop()
 
+            if not state.words.isdisjoint(self.badWords):
+                continue
+
+            print(state.words)
             if len(state.wordLengths) == 0:
-                solutions.append(state.path)
+                yield state.path
 
             validPaths = []
             for root in state.getValidRoots(self.trie):
@@ -35,5 +43,3 @@ class Solver:
 
             for path in validPaths:
                 unsolvedStates.append(state.getRemovedPathState(path))
-
-        return solutions
