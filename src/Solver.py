@@ -5,6 +5,7 @@ from State import State, StateNode
 
 class Solver:
     def __init__(self, wordLengths):
+        self.solutions = []
         # Generate Trie
         self.trie = Trie()
         numWords = 0
@@ -16,33 +17,24 @@ class Solver:
                     numWords += self.trie.addWord(word.strip('\n'))
         print('Added ', numWords, ' words to trie')
 
-    # TODO(mitch): turn this into a generator
-    # TODO(mitch): use multiprocessing/multithreading?
-
-    # Solve the current board state
-    def solveState(self, state, trie, currentPath=[]):
-        # If there are no more word lengths, there's nothing left to solve
-        if len(state.wordLengths) == 0:
-            return [currentPath]
-
-        # Loop over the root nodes and add their valid paths
-        validPaths = []
-        for r in state.getValidRoots(trie):
-            paths = r.getValidPaths(trie, state)
-            (validPaths.extend(paths) if paths else None)
-
-        # Loop over the valid paths and add their solved states
-        solutionPaths = []
-        for path in validPaths:
-            rv = self.solveState(state.getRemovedPathState(path), trie, currentPath + [path])
-            (solutionPaths.extend(rv) if rv else None)
-
-        return solutionPaths
+    #TODO(mitch): check level 4 of rat
 
     # Solve the current level
     def solveLevel(self, state, wordLengths):
-        # Create level state
-        levelState = State(state, wordLengths)
+        solutions = []
+        options = [(State(state, wordLengths), [])]
+        while len(options) != 0:
+            option, currentPath = options.pop()
 
-        # Solve the given state
-        return self.solveState(levelState, self.trie)
+            if len(option.wordLengths) == 0:
+                solutions.append(currentPath)
+
+            validPaths = []
+            for root in option.getValidRoots(self.trie):
+                paths = root.getValidPaths(self.trie, option)
+                (validPaths.extend(paths) if paths else None)
+
+            for path in validPaths:
+                options.append((option.getRemovedPathState(path), currentPath + [path]))
+
+        return solutions
