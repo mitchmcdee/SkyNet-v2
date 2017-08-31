@@ -20,21 +20,20 @@ class Solver:
     #TODO(mitch): check level 4 of rat
 
     # Solve the current level
-    def solveLevel(self, state, wordLengths):
+    def solveLevel(self, initialState, wordLengths):
         solutions = []
-        options = [(State(state, wordLengths), [])]
-        while len(options) != 0:
-            option, currentPath = options.pop()
+        unsolvedStates = [State(initialState, wordLengths)]
+        while len(unsolvedStates) != 0:
+            state = unsolvedStates.pop()
 
-            if len(option.wordLengths) == 0:
-                solutions.append(currentPath)
+            if len(state.wordLengths) == 0:
+                solutions.append(state.path)
 
             validPaths = []
-            for root in option.getValidRoots(self.trie):
-                paths = root.getValidPaths(self.trie, option)
-                (validPaths.extend(paths) if paths else None)
+            for root in state.getValidRoots(self.trie):
+                validPaths.extend(root.getValidPaths(self.trie, state))
 
             for path in validPaths:
-                options.append((option.getRemovedPathState(path), currentPath + [path]))
+                unsolvedStates.append(state.getRemovedPathState(path))
 
         return solutions
