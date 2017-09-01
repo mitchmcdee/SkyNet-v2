@@ -10,7 +10,8 @@ class Vision:
     GRID_CENTRES = (((0.270,0.320),0.490,0.2900,0.120,0.080),  # 2x2
                     ((0.190,0.265),0.320,0.1900,0.080,0.060),  # 3x3
                     ((0.141,0.247),0.248,0.1440,0.060,0.040),  # 4x4
-                    ((0.115,0.234),0.192,0.1125,0.045,0.025))  # 5x5
+                    ((0.115,0.234),0.192,0.1125,0.045,0.025),  # 5x5
+                    ((0.093,0.221),0.160,0.0941,0.040,0.024))  # 6x6
     RESET_BUTTON =  (0.306,0.950)                              # Location of reset button
     AD_BUTTON =     (0.960,0.078)                              # Location of close ad button
 
@@ -60,18 +61,20 @@ class Vision:
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
+        # Image.fromarray(image).show()
+
         numBoxes = 0                            # number of boxes in the row
         blackFlag = True                        # flag of whether we're currently on black pixels
-        startY = int(0.208 * self.height)       # height of the first row in the grid
+        startY = int(0.19 * self.height)       # height of the first row in the grid
 
-        for x in range(0, image.shape[1]):
+        for x in range(image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel >= 75 and blackFlag:       # we found a white grid!
+            if pixel >= 50 and blackFlag:       # we found a white grid!
                 blackFlag = False
                 numBoxes += 1
 
-            if pixel < 75 and not blackFlag:   # we found the end of the grid
+            if pixel < 50 and not blackFlag:   # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -79,7 +82,7 @@ class Vision:
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
         conf = '-psm 10 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        charText = pytesseract.image_to_string(image, config=conf)
+        charText = pytesseract.image_to_string(image, config=conf).upper()
         outQueue.put((index, charText))
 
     # Get a list of chars from the image
@@ -89,6 +92,7 @@ class Vision:
 
         # If out of range, return empty list of chars
         if numBoxes - 2 >= len(Vision.GRID_CENTRES):
+            print('Number of boxes is out of grid range:', numBoxes)
             return []
 
         # Get grid centres and calculate their char widths
@@ -129,7 +133,7 @@ class Vision:
             pixel = image[startY][x]
 
             # If black pixel
-            if pixel < 75:
+            if pixel < 50:
                 continue
 
             # White edge was found! Let's look for its right edge
@@ -138,12 +142,12 @@ class Vision:
                 pixel = image[startY][i]
 
                 # If black pixel
-                if pixel < 75 and not lowFlag:
+                if pixel < 50 and not lowFlag:
                     lowFlag = True
                     continue
 
                 # If low flag has been set, we've found a right edge!
-                if pixel >= 75 and lowFlag:
+                if pixel >= 50 and lowFlag:
                     sideLength = i - x
                     break
             break
@@ -155,7 +159,7 @@ class Vision:
         # Find top edge
         for y in reversed(range(0, startY)):
             # Check if top edge was found
-            if image[y][x + sideLength // 2] >= 75:
+            if image[y][x + sideLength // 2] >= 50:
                 break
         else:
             # Top edge was not found
@@ -166,7 +170,7 @@ class Vision:
         x += sideLength // 2
         while x < image.shape[1]:
             # If black pixel, end of word
-            if image[y][x] < 75:
+            if image[y][x] < 50:
                 break
 
             # Otherwise, increment word
@@ -174,7 +178,7 @@ class Vision:
 
             # Find left edge of current letterbox
             for i in reversed(range(x - sideLength, x)):
-                if image[startY][i] >= 75:
+                if image[startY][i] >= 50:
                     break
 
             # Jump into next char

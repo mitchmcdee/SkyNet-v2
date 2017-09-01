@@ -13,23 +13,8 @@ def quit(reason):
 # State of
 class State():
     def __init__(self, state, wordLengths, path=[], words=set()):
-        # Side length of the (hopefully) perfect square
-        sideLength = sqrt(len(state))
-
-        # Check input state is a perfect square
-        if (sideLength != int(sideLength)):
-            quit("Input state is not a perfect square")
-
-        # Check all chars are valid
-        if not all([str(c).isalpha() or c == '_' for c in state]):
-            quit("Input contains illegal chars")
-
-        # Check word lengths are valid
-        if len(state) != sum(wordLengths):
-            quit("Input contains invalid word lengths")
-
         self.state = state
-        self.sideLength = int(sideLength)
+        self.sideLength = int(sqrt(len(state)))
         self.wordLengths = wordLengths
         self.path = path
         self.words = words

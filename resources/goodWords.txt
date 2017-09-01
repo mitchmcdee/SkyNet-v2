@@ -11,6 +11,7 @@ arrow
 ask
 axe
 bacon
+backpack
 bag
 bald
 ball
@@ -91,6 +92,7 @@ clown
 clothing
 coconut
 collar
+coach
 comb
 compass
 cookie
@@ -145,6 +147,7 @@ elbow
 elephant
 elevator
 elk
+evidence
 empty
 envelope
 eraser
@@ -173,7 +176,9 @@ fly
 fold
 football
 fork
+formula
 fruit
+friend
 full
 funnel
 game
@@ -208,6 +213,7 @@ honey
 hook
 horse
 house
+human
 iceberg
 icicle
 idea
@@ -308,6 +314,7 @@ officer
 olive
 onion
 onions
+opponent
 orange
 oval
 overbite
@@ -323,6 +330,7 @@ pancake
 panda
 panties
 patch
+pattern
 path
 patient
 peace
@@ -369,6 +377,7 @@ rabbit
 raft
 raincoat
 record
+recipe
 rifle
 right
 robot
@@ -397,6 +406,7 @@ scarf
 scissors
 scooter
 screw
+servant
 shallow
 shark
 sheep
@@ -456,6 +466,7 @@ sugar
 suitcase
 sun
 surgery
+surface
 swan
 swing
 switch
@@ -493,6 +504,7 @@ trousers
 trowel
 trunk
 tug
+tunnel
 turkey
 turtle
 tv
@@ -503,12 +515,14 @@ unicycle
 up
 upstairs
 vampire
+valley
 village
 vertical
 vitamin
 volcano
 waffle
 well
+weapon
 whale
 wheel
 whisper
@@ -521,6 +535,7 @@ wink
 witch
 wolf
 woodpile
+witness
 word
 writer
 yacht

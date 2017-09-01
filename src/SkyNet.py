@@ -2,7 +2,7 @@
 import pyautogui
 import time
 import sys
-import math
+from math import sqrt
 from PIL import Image
 from Solver import Solver
 from Vision import Vision
@@ -46,6 +46,11 @@ def clickButton(widthPercentage, heightPercentage):
     pyautogui.mouseDown()
     pyautogui.mouseUp()
 
+def reset():
+    clickButton(*vision.AD_BUTTON)
+    clickButton(*vision.RESET_BUTTON)
+
+
 # Play the game!
 while(True):
     # Ensure window has focus by clicking it
@@ -56,15 +61,30 @@ while(True):
 
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
-    width = int(math.sqrt(len(state)))
+    width = int(sqrt(len(state)))
     print(state, wordLengths)
 
     # Check state is reasonable
-    if width == 0 or len(wordLengths) == 0 or width ** 2 != len(state) or sum(wordLengths) != len(state):
+    if width == 0 or len(wordLengths) == 0 or width ** 2 != len(state):
         print('Invalid state, resetting')
-        clickButton(*vision.AD_BUTTON)
-        clickButton(*vision.RESET_BUTTON)
+        reset()
         continue
+
+    # Check all chars are valid
+    if not all([str(c).isalpha() or c == '_' for c in state]):
+        print('Input contains illegal chars, resetting')
+        reset()
+        continue
+
+    # Check word lengths are valid
+    if len(state) != sum(wordLengths):
+        print('Input contains invalid word lengths, resetting')
+        reset()
+        continue
+
+    # width=6
+    # wordLengths=[6,7,4]
+    # state='ttr___nls___ave___par___nee___tov___'
 
     # Generate solutions
     solver = Solver(wordLengths)
