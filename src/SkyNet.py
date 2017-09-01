@@ -61,6 +61,7 @@ while(True):
 
     # Check state is reasonable
     if width == 0 or len(wordLengths) == 0 or width ** 2 != len(state) or sum(wordLengths) != len(state):
+        print('Invalid state, resetting')
         clickButton(*vision.AD_BUTTON)
         clickButton(*vision.RESET_BUTTON)
         continue
@@ -85,25 +86,26 @@ while(True):
             mouseGrid.append((x, y))
 
     # Loop over valid solutions to try them all
-    for solution in solutions:
+    for solutionState in solutions:
         # Get mouse coordinates for solution and enter them
-        for path in solution:
-            before = vision.getBoardRatio()
+        for i,path in enumerate(solutionState.path):
+            before = max([vision.getBoardRatio() for i in range(2)]) # TODO(mitch): fix this, it sometimes get 0.0
             enterWord([mouseGrid[i] for i in path])
-            after = vision.getBoardRatio()
+            after = max([vision.getBoardRatio() for i in range(2)]) # TODO(mitch): fix this, it sometimes get 0.0
             print(before)
             print(after)
 
+            word = ('').join([solutionState.allStates[i][j] for j in path])
+
             # if the same ratio, the word entered was a bad one, so remove it from all solutions
             if round(before, 2) == round(after, 2):
-                solver.addBadWord(('').join([state[i] for i in path]))
+                print('adding bad word,', word)
+                solver.addBadWord(word)
                 break
 
-        # Else if no break, all words in solution were entered, check if in win state
+        # Else if no break, all words in solution were entered, exit out of entering solutions
         else:
-            if vision.checkLevelComplete():
-                time.sleep(3.5) # Sleep while we wait for game to be over
-                break
+            break
 
         # A problem occured, reset!
         clickButton(*vision.RESET_BUTTON)

@@ -21,9 +21,6 @@ class Solver:
     def addBadWord(self, word):
         self.badWords.add(word.lower())
 
-    # TODO(mitch): check level 4 of rat, it breaks word lengths
-    # TODO(mitch): potential optimisation, find valid words first then find their combination?
-
     # Solve the current level
     def solveLevel(self, initialState, wordLengths):
         unsolvedStates = [State(initialState, wordLengths)]
@@ -33,9 +30,9 @@ class Solver:
             if not state.words.isdisjoint(self.badWords):
                 continue
 
-            print(state.words)
+            print(state.words, self.badWords)
             if len(state.wordLengths) == 0:
-                yield state.path
+                yield state
 
             validPaths = []
             for root in state.getValidRoots(self.trie):

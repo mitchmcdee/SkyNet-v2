@@ -78,7 +78,7 @@ class Vision:
 
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
-        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ -l eng'
+        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         charText = pytesseract.image_to_string(image, config=conf)
         outQueue.put((index, charText))
 
@@ -140,12 +140,11 @@ class Vision:
                 # If black pixel
                 if pixel < 75 and not lowFlag:
                     lowFlag = True
-                    gapWidth = i - x
                     continue
 
                 # If low flag has been set, we've found a right edge!
                 if pixel >= 75 and lowFlag:
-                    sideLength = i - x + gapWidth
+                    sideLength = i - x
                     break
             break
 
@@ -164,14 +163,25 @@ class Vision:
 
         # Count number of letters
         wordLength = 0
-        for x in range(x + int(sideLength // (5/3)), image.shape[1], sideLength):
+        x += sideLength // 2
+        while x < image.shape[1]:
             # If black pixel, end of word
             if image[y][x] < 75:
                 break
+
+            # Otherwise, increment word
             wordLength += 1
 
+            # Find left edge of current letterbox
+            for i in reversed(range(x - sideLength, x)):
+                if image[startY][i] >= 75:
+                    break
+
+            # Jump into next char
+            x = int(i + sideLength * (3/2))
+
         # Return word length and its final check position
-        return wordLength, x, sideLength
+        return wordLength, x, int(y + sideLength * (3/2))
 
     # Get a list of word lengths from the image
     def getWordLengthsFromImage(self, image):
@@ -189,15 +199,15 @@ class Vision:
         while startY < croppedImage.shape[0]:
             result = self.getWord(croppedImage, startX, startY)
 
+            # If no words were found or we've read all we can from this row, go into next row
             if result is None or result[1] >= croppedImage.shape[1]:
                 startY += startJump
                 startX = 0
                 continue
 
-            wordLength, endX, sideLength = result
-
+            wordLength, endX, endY = result
             words.append(wordLength)
-            startJump = sideLength
+            startJump = endY - startY
             startX = endX
 
         return words

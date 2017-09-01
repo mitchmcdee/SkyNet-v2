@@ -2,6 +2,8 @@ aerial
 anchor
 angle
 antenna
+athlete
+auction
 anvil
 apple
 arm
@@ -115,6 +117,7 @@ dice
 dinosaur
 divide
 doctor
+document
 dog
 doghouse
 doll
@@ -174,6 +177,7 @@ full
 funnel
 game
 gap
+garden
 ghost
 glass
 globe
@@ -250,6 +254,7 @@ loop
 lorry
 man
 manager
+magazine
 magnet
 mail
 mailbox
@@ -401,6 +406,7 @@ shirt
 shoelace
 shoes
 shorts
+station
 shoulder
 shout
 shovel
@@ -453,6 +459,7 @@ swing
 switch
 sword
 table
+tissue
 tail
 talk
 tall
@@ -494,6 +501,7 @@ unicycle
 up
 upstairs
 vampire
+village
 vertical
 vitamin
 volcano
@@ -515,3 +523,4 @@ word
 writer
 yacht
 zipper
+zoo

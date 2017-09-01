@@ -33,6 +33,7 @@ class State():
         self.wordLengths = wordLengths
         self.path = path
         self.words = words
+        self.allStates = [state]
 
     # Returns all the children surrounding a given point
     def getChildrenFromPoint(self, pointIndex):
@@ -134,8 +135,9 @@ class State():
 
         # Remove word length of word that was removed and update path
         newState.wordLengths.remove(len(path))
-        newState.path += [path]
         newState.words.add(self.getWord(path))
+        newState.path += [path]
+        newState.allStates = self.allStates + [newState.state]
         
         return newState
 

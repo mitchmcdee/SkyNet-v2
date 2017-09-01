@@ -7,7 +7,8 @@ BASE = '../resources/'
 words = {}
 
 # Root file containing words of various lengths
-with open(BASE + 'bigWords.txt', 'r') as f:
+# with open(BASE + 'bigWords.txt', 'r') as f:
+with open(BASE + 'goodWords.txt', 'r') as f:
     for line in f:
         word = line.strip('\n')
         length = str(len(word))
