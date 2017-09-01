@@ -65,6 +65,7 @@ cane
 cannon
 canoe
 cap
+captain
 card
 carrot
 cart
@@ -219,6 +220,7 @@ japan
 jar
 joker
 jug
+judge
 jump
 kayak
 key

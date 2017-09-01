@@ -78,7 +78,7 @@ class Vision:
 
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
-        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        conf = '-psm 10 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
         charText = pytesseract.image_to_string(image, config=conf)
         outQueue.put((index, charText))
 
