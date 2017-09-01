@@ -67,11 +67,11 @@ class Vision:
         for x in range(0, image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel >= 80 and blackFlag:       # we found a white grid!
+            if pixel >= 75 and blackFlag:       # we found a white grid!
                 blackFlag = False
                 numBoxes += 1
 
-            if pixel < 80 and not blackFlag:   # we found the end of the grid
+            if pixel < 75 and not blackFlag:   # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -129,7 +129,7 @@ class Vision:
             pixel = image[startY][x]
 
             # If black pixel
-            if pixel < 80:
+            if pixel < 75:
                 continue
 
             # White edge was found! Let's look for its right edge
@@ -138,13 +138,13 @@ class Vision:
                 pixel = image[startY][i]
 
                 # If black pixel
-                if pixel < 80 and not lowFlag:
+                if pixel < 75 and not lowFlag:
                     lowFlag = True
                     gapWidth = i - x
                     continue
 
                 # If low flag has been set, we've found a right edge!
-                if pixel >= 80 and lowFlag:
+                if pixel >= 75 and lowFlag:
                     sideLength = i - x + gapWidth
                     break
             break
@@ -156,7 +156,7 @@ class Vision:
         # Find top edge
         for y in reversed(range(0, startY)):
             # Check if top edge was found
-            if image[y][x + sideLength // 2] >= 80:
+            if image[y][x + sideLength // 2] >= 75:
                 break
         else:
             # Top edge was not found
@@ -164,9 +164,9 @@ class Vision:
 
         # Count number of letters
         wordLength = 0
-        for x in range(x + int(sideLength // (5/2)), image.shape[1], sideLength):
+        for x in range(x + int(sideLength // (5/3)), image.shape[1], sideLength):
             # If black pixel, end of word
-            if image[y][x] < 80:
+            if image[y][x] < 75:
                 break
             wordLength += 1
 
