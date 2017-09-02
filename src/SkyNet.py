@@ -83,12 +83,12 @@ while(True):
         continue
 
     # width=6
-    # wordLengths=[6,7,4]
-    # state='ttr___nls___ave___par___nee___tov___'
+    # wordLengths=[5,4,8,4,6,3]
+    # state='npsin_wprso_ioepn_rlioi_clwit_satkn_'
 
     # Generate solutions
-    solver = Solver(wordLengths)
-    solutions = solver.solveLevel([c.lower() for c in state], wordLengths)
+    solver = Solver(state, wordLengths)
+    solutions = solver.solveLevel()
 
     # Generate mouse grid
     grid = Vision.GRID_CENTRES[width - 2]
