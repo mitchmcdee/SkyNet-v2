@@ -13,24 +13,24 @@ SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
 MENUBAR_HEIGHT = 44                # Mitch's menubar height
 
 def enterWord(word, speed=0):
-    # Move to the start of the word before selecting anything
-    pyautogui.mouseUp()
-    pyautogui.moveTo(word[0][0], word[0][1], speed)
-    pyautogui.mouseDown()
+    # board ratio before entering word
+    before = vision.getBoardRatio()
 
     # Move over each letter
+    pyautogui.mouseDown()
     for letter in word:
-        pyautogui.mouseDown()
         pyautogui.moveTo(letter[0], letter[1], speed)
         pyautogui.mouseDown()
 
-    # Release mouse up and move to empty location
+    # Release mouse and move to empty location
     pyautogui.mouseUp()
-    pyautogui.moveTo(0, SCREEN_COORDS[1], 0)
-    pyautogui.mouseDown()
-    pyautogui.mouseUp()
+    pyautogui.moveTo(0, SCREEN_COORDS[1], speed)
 
-vision = Vision(SCREEN_COORDS)
+    # Wait for potential word drop animation to complete
+    time.sleep(1.3)
+
+    # Return before and after board ratios to check if entered word was valid
+    return before, vision.getBoardRatio()
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage):
@@ -49,15 +49,25 @@ def clickButton(widthPercentage, heightPercentage):
 def reset():
     clickButton(*vision.AD_BUTTON)
     clickButton(*vision.RESET_BUTTON)
+    clickButton(0, SCREEN_COORDS[1] / vision.height)
 
+################################################################################
+
+# Set up computer vision
+vision = Vision(SCREEN_COORDS)
+
+# Wait for screen to become responsive (anrdoid emulator? osx? idek lol)
+before = None
+after = None
+while before == after:
+    before = vision.getBoardRatio()
+    reset()
+    after = vision.getBoardRatio()
 
 # Play the game!
 while(True):
     # Ensure window has focus by clicking it
-    pyautogui.click(0, SCREEN_COORDS[1], 3)
-
-    # Wait for any transitions to finish
-    time.sleep(1)
+    clickButton(0, SCREEN_COORDS[1] / vision.height)
 
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
@@ -109,16 +119,13 @@ while(True):
     for solutionState in solutions:
         # Get mouse coordinates for solution and enter them
         for i,path in enumerate(solutionState.path):
-            before = max([vision.getBoardRatio() for i in range(2)]) # TODO(mitch): fix this, it sometimes get 0.0
-            enterWord([mouseGrid[i] for i in path])
-            after = max([vision.getBoardRatio() for i in range(2)]) # TODO(mitch): fix this, it sometimes get 0.0
-            print(before)
-            print(after)
+            before, after = enterWord([mouseGrid[i] for i in path])
 
-            word = ('').join([solutionState.allStates[i][j] for j in path])
-
-            # if the same ratio, the word entered was a bad one, so remove it from all solutions
-            if round(before, 2) == round(after, 2):
+            # If the same ratio, the word entered was a bad one, so remove it from all solutions
+            if before == after:
+                word = ('').join([solutionState.allStates[i][j] for j in path])
+                print(before)
+                print(after)
                 print('adding bad word,', word)
                 solver.addBadWord(word)
                 break

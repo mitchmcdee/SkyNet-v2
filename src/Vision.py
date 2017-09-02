@@ -1,5 +1,6 @@
 import numpy as np
 import pyautogui
+import time
 import cv2
 import pytesseract
 from multiprocessing import Process, Queue
@@ -24,40 +25,28 @@ class Vision:
     def getScreenImage(self):
         return pyautogui.screenshot(region=(*self.topLeft, self.width, self.height))
 
-    # Checks if the entered solution was correct and we're at the level complete scene
-    def checkLevelComplete(self):
-        return self.getScreenRatio() < 0.8
+    # Takes a screenshot of the board region
+    def getBoardImage(self):
+        topLeft = self.topLeft[0], int(0.17 * self.height)
+        width = self.width
+        height = int(0.75 * self.height) - int(0.17 * self.height)
+        return pyautogui.screenshot(region=(*topLeft, width, height))
 
-    # Gets screen ratio of whiteness
-    def getScreenRatio(self):
+    # Gets board ratio of whiteness
+    def getBoardRatio(self):
         # Get screenshot of game state
-        image = self.getScreenImage()
+        image = np.array(self.getBoardImage())
 
         # Convert image to grayscale
         grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
 
         # Get height and width
-        height, width = grayImage.shape
+        h, w = grayImage.shape
 
-        # Get threshold ratio of the game screen and compare it to the expected
-        _, threshold = cv2.threshold(grayImage, 190, 255, cv2.THRESH_BINARY)
-        return cv2.countNonZero(threshold) / float((height * width))
+        # Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
 
-    # Gets board ratio of whiteness
-    def getBoardRatio(self):
-        # Get screenshot of game state
-        image = self.getScreenImage()
-
-        # Convert image to grayscale and crop it
-        grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
-        croppedImage = grayImage[int(0.170 * self.height) : int(0.750 * self.height),:]
-
-        # Get height and width
-        height, width = croppedImage.shape
-
-        # Get threshold ratio of the game screen and compare it to the expected
-        _, threshold = cv2.threshold(croppedImage, 190, 255, cv2.THRESH_BINARY)
-        return cv2.countNonZero(threshold) / float((height * width))
+        # Return total whiteness of the screen
+        return sum([1 if grayImage[y][x] >= 50 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
