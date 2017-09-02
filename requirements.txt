@@ -1,7 +1,5 @@
-PyAutoGUI==0.9.36
-requests==2.18.3
-opencv_python==3.2.0.8
-pytesseract==0.1.7
 numpy==1.12.1
+pytesseract==0.1.7
+PyAutoGUI==0.9.36
+opencv_python==3.2.0.8
 Pillow==4.2.1
-beautifulsoup4==4.6.0
