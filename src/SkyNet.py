@@ -29,8 +29,8 @@ def enterWord(word, speed=0):
     # Wait for potential word drop animation to complete
     time.sleep(1.3)
 
-    # Return before and after board ratios to check if entered word was valid
-    return before, vision.getBoardRatio()
+    # Return true if entered word was valid (board states were different), else false
+    return before != vision.getBoardRatio()
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage):
@@ -75,26 +75,14 @@ while(True):
     print(state, wordLengths)
 
     # Check state is reasonable
-    if width == 0 or len(wordLengths) == 0 or width ** 2 != len(state):
+    if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths) or not all([str(c).isalpha() or c == '_' for c in state]):
         print('Invalid state, resetting')
         reset()
         continue
 
-    # Check all chars are valid
-    if not all([str(c).isalpha() or c == '_' for c in state]):
-        print('Input contains illegal chars, resetting')
-        reset()
-        continue
-
-    # Check word lengths are valid
-    if len(state) != sum(wordLengths):
-        print('Input contains invalid word lengths, resetting')
-        reset()
-        continue
-
     # width=6
-    # wordLengths=[5,4,8,4,6,3]
-    # state='npsin_wprso_ioepn_rlioi_clwit_satkn_'
+    # wordLengths=[7,5,8]
+    # state=list('________fh___uaac__rcom_slder_ohtss_')
 
     # Generate solutions
     solver = Solver(state, wordLengths)
@@ -119,15 +107,11 @@ while(True):
     for solutionState in solutions:
         # Get mouse coordinates for solution and enter them
         for i,path in enumerate(solutionState.path):
-            before, after = enterWord([mouseGrid[i] for i in path])
+            isValid = enterWord([mouseGrid[i] for i in path])
 
             # If the same ratio, the word entered was a bad one, so remove it from all solutions
-            if before == after:
-                word = ('').join([solutionState.allStates[i][j] for j in path])
-                print(before)
-                print(after)
-                print('adding bad word,', word)
-                solver.addBadWord(word)
+            if not isValid:
+                solver.addBadWord(('').join([solutionState.allStates[i][j] for j in path]))
                 break
 
         # Else if no break, all words in solution were entered, exit out of entering solutions

@@ -37,7 +37,7 @@ class Solver:
             if not state.words.isdisjoint(self.badWords):
                 continue
 
-            print(state.words)
+            print(state.words, self.badWords)
             if len(state.wordLengths) == 0:
                 yield state
 
