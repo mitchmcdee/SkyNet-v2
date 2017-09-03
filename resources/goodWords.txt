@@ -159,6 +159,7 @@ fan
 fang
 faucet
 feather
+festival
 female
 fence
 ferry
@@ -185,6 +186,7 @@ game
 gap
 garden
 ghost
+hospital
 glass
 globe
 gloves
@@ -320,6 +322,7 @@ oval
 overbite
 overlap
 owl
+midnight
 paddle
 padlock
 paint
@@ -334,6 +337,7 @@ pattern
 path
 patient
 peace
+attitude
 peach
 pear
 peas
@@ -348,7 +352,9 @@ piano
 picture
 pie
 pig
+protein
 pigsty
+premium
 pillar
 pipe
 pirate
@@ -362,6 +368,7 @@ poison
 porridge
 postcard
 pot
+argument
 potato
 prism
 profit
@@ -425,7 +432,9 @@ shout
 shovel
 shower
 sickle
+stomach
 sign
+tourist
 silo
 sing
 sink
@@ -461,6 +470,7 @@ stilts
 stinger
 stop
 straw
+travel
 string
 stripe
 sugar
@@ -502,6 +512,7 @@ triplets
 trombone
 trophy
 trousers
+trouble
 trowel
 trunk
 tug
@@ -513,6 +524,7 @@ tweezers
 twins
 umbrella
 unicycle
+uniform
 up
 upstairs
 vampire
