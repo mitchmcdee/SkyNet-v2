@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import pyautogui
-import time
 import sys
 from math import sqrt
 from PIL import Image
@@ -74,19 +73,15 @@ while(True):
     width = int(sqrt(len(state)))
     print(state, wordLengths)
 
+    # width=6
+    # wordLengths=[7,5,4,5]
+    # state=list('o_____n_la__iosc__tgle__obva__prefr_')
+
     # Check state is reasonable
-    if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths) or not all([str(c).isalpha() or c == '_' for c in state]):
+    if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths):
         print('Invalid state, resetting')
         reset()
         continue
-
-    # width=6
-    # wordLengths=[7,5,8]
-    # state=list('________fh___uaac__rcom_slder_ohtss_')
-
-    # Generate solutions
-    solver = Solver(state, wordLengths)
-    solutions = solver.solveLevel()
 
     # Generate mouse grid
     grid = Vision.GRID_CENTRES[width - 2]
@@ -104,19 +99,20 @@ while(True):
             mouseGrid.append((x, y))
 
     # Loop over valid solutions to try them all
-    for solutionState in solutions:
-        # Get mouse coordinates for solution and enter them
-        for i,path in enumerate(solutionState.path):
-            isValid = enterWord([mouseGrid[i] for i in path])
+    with Solver(state, wordLengths) as solver:
+        for solutionState in solver.getSolutions():
+            # Get mouse coordinates for solution and enter them
+            for i,path in enumerate(solutionState.path):
+                isValid = enterWord([mouseGrid[i] for i in path])
 
-            # If the same ratio, the word entered was a bad one, so remove it from all solutions
-            if not isValid:
-                solver.addBadWord(('').join([solutionState.allStates[i][j] for j in path]))
+                # If the same ratio, the word entered was a bad one, so remove it from all solutions
+                if not isValid:
+                    solver.addBadWord(('').join([solutionState.allStates[i][j] for j in path]))
+                    break
+
+            # Else if no break, all words in solution were entered, exit out of entering solutions
+            else:
                 break
 
-        # Else if no break, all words in solution were entered, exit out of entering solutions
-        else:
-            break
-
-        # A problem occured, reset!
-        clickButton(*vision.RESET_BUTTON)
+            # A problem occured, reset!
+            clickButton(*vision.RESET_BUTTON)

@@ -1,29 +1,21 @@
 import sys
 from math import sqrt
-from copy import deepcopy
 
 # Possible neighbour directions of each node in a State
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
-# Log reason for quitting and quit
-def quit(reason):
-    print(reason)
-    sys.exit(0)
-
 # State of
 class State():
-    def __init__(self, state, wordLengths, path=[], words=set()):
+    def __init__(self, state, wordLengths, path=[], words=set(), allStates=None):
         self.state = state
         self.sideLength = int(sqrt(len(state)))
         self.wordLengths = wordLengths
         self.path = path
         self.words = words
-        self.allStates = [state]
+        self.allStates = allStates or [state]
 
     # Returns all the children surrounding a given point
     def getChildrenFromPoint(self, pointIndex):
-        children = []
-
         # Iterate over each direction
         for child in directions:
             # Convert 1D indexing to x and y coords
@@ -41,22 +33,17 @@ class State():
             if self.state[childIndex] == '_':
                 continue
 
-            # Append it as a valid child
-            children.append(childIndex)
-
-        return children
+            yield childIndex
 
     # Generates and returns a list of valid (i.e. can make a word) root nodes
     def getValidRoots(self, trie):
-        roots = []
-
         # Loop over each of the top level nodes in a state
         for i,v in enumerate(self.state):
             # Skip over whitespaces (words don't start with whitespace)
             if v == '_':
                 continue
 
-            root = StateNode(i, self.state[i], {}, [self.state[i]])
+            root = StateNode(i, self.state[i], set(), [self.state[i]])
             stack = [root]
 
             # Perform simple DFS on each path
@@ -69,26 +56,21 @@ class State():
                     if c in current.parents:
                         continue
 
-                    childPath = deepcopy(current.path) + [self.state[c]]
+                    childPath = current.path[:] + [self.state[c]]
 
                     # Check path is a valid path (i.e. can make a word)
                     if trie.isPath(childPath) is not True:
                         continue
 
-                    child = StateNode(c, self.state[c], deepcopy(current.parents), childPath)
-                    child.addParent(current)
+                    childParents = current.parents.copy()
+                    childParents.add(current.index)
+
+                    child = StateNode(c, self.state[c], childParents, childPath)
                     current.addChild(child)
+
                     stack.append(child)
 
-            roots.append(root)
-
-        return roots
-
-    # Print out the State in a nice grid
-    def printState(self):
-        for i in range(self.sideLength):
-            multiplier = i * self.sideLength
-            print(self.state[multiplier : self.sideLength + multiplier])
+            yield root
 
     # Return the word translation of the given path
     def getWord(self, path):
@@ -96,36 +78,31 @@ class State():
 
     # Generate and return a new State that removes the given path
     def getRemovedPathState(self, path):
-        newState = deepcopy(self)
+        newState = self.state[:]
 
         # Replace path with underscores (i.e. empty space)
         for i in path:
-            newState.state[i] = '_'
+            newState[i] = '_'
 
         # If tiles need to be dropped down, do so
-        for i in range(len(newState.state)):
-            if newState.state[i] != '_':
+        for i,v in enumerate(newState):
+            if v != '_':
                 continue
 
             # swap cells all the way up
             aboveCellIndex = i - self.sideLength
             while aboveCellIndex >= 0:
-
-                temp = newState.state[i]
-                newState.state[i] = newState.state[aboveCellIndex]
-                newState.state[aboveCellIndex] = temp
-
+                newState[i], newState[aboveCellIndex] = newState[aboveCellIndex], v
                 aboveCellIndex -= self.sideLength
                 i -= self.sideLength
 
-        # Remove word length of word that was removed and update path
-        newState.wordLengths.remove(len(path))
-        newState.words.add(self.getWord(path))
-        newState.path += [path]
-        newState.allStates = self.allStates + [newState.state]
-        
-        return newState
+        newWordLengths = self.wordLengths[:]
+        newWordLengths.remove(len(path))
 
+        newWords = self.words.copy()
+        newWords.add(self.getWord(path))
+
+        return State(newState, newWordLengths, self.path[:] + [path], newWords, self.allStates[:] + [newState])
 
 # State Nodes are nodes contained in the valid paths of a State
 class StateNode():
@@ -136,29 +113,17 @@ class StateNode():
         self.children = {}
         self.path = path
 
-    # Add a childd to the State Node
+    # Add a child to the State Node
     def addChild(self, child):
         self.children[child.index] = child
-
-
-    # Add a parent to the State Node
-    def addParent(self, parent):
-        self.parents[parent.index] = None
-
-    # Print out all the children in a path
-    def printChildren(self):
-        print(self.value, self.children)
-        for child in self.children.values():
-            printChildren(child)
 
     # Return all the possible paths for a State Node
     def getPaths(self):
         paths = [[self.index]]
         for child in self.children.values():
             paths.extend([[self.index] + child for child in child.getPaths()])
-    
         return paths
 
     # Return all the valid paths (i.e. paths that make a word of the required length)
     def getValidPaths(self, trie, state):
-        return list(filter(lambda x: len(x) in state.wordLengths and trie.isWord(state.getWord(x)), self.getPaths()))
+        return filter(lambda x: len(x) in state.wordLengths and trie.isWord(state.getWord(x)), self.getPaths())

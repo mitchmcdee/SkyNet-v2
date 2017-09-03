@@ -127,7 +127,7 @@ class Vision:
 
             # White edge was found! Let's look for its right edge
             lowFlag = False
-            for i in range(x, x + int(0.1 * image.shape[1])):
+            for i in range(x, min(image.shape[1], x + int(0.1 * image.shape[1]))):
                 pixel = image[startY][i]
 
                 # If black pixel
