@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pyautogui
 import sys
+import time
 from math import sqrt
 from PIL import Image
 from Solver import Solver
@@ -24,9 +25,6 @@ def enterWord(word, speed=0):
     # Release mouse and move to empty location
     pyautogui.mouseUp()
     pyautogui.moveTo(0, SCREEN_COORDS[1], speed)
-
-    # Wait for potential word drop animation to complete
-    time.sleep(1.3)
 
     # Return true if entered word was valid (board states were different), else false
     return before != vision.getBoardRatio()
@@ -114,5 +112,5 @@ while(True):
             else:
                 break
 
-            # A problem occured, reset!
-            clickButton(*vision.RESET_BUTTON)
+    # A problem occured, reset!
+    clickButton(*vision.RESET_BUTTON)
