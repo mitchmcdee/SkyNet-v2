@@ -12,7 +12,8 @@ class Vision:
                     ((0.190,0.265),0.320,0.1900,0.080,0.060),  # 3x3
                     ((0.141,0.247),0.248,0.1440,0.060,0.040),  # 4x4
                     ((0.115,0.234),0.192,0.1125,0.045,0.025),  # 5x5
-                    ((0.093,0.221),0.160,0.0941,0.040,0.024))  # 6x6
+                    ((0.093,0.221),0.160,0.0941,0.040,0.024),  # 6x6
+                    ((0.090,0.214),0.144,0.0845,0.035,0.021))  # 7x7
     RESET_BUTTON =  (0.306,0.950)                              # Location of reset button
     AD_BUTTON =     (0.960,0.078)                              # Location of close ad button
 
@@ -46,7 +47,7 @@ class Vision:
         # Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
 
         # Return total whiteness of the screen
-        return sum([1 if grayImage[y][x] >= 50 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
+        return sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
@@ -59,11 +60,11 @@ class Vision:
         for x in range(image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel >= 50 and blackFlag:       # we found a white grid!
+            if pixel >= 30 and blackFlag:       # we found a white grid!
                 blackFlag = False
                 numBoxes += 1
 
-            if pixel < 50 and not blackFlag:   # we found the end of the grid
+            if pixel < 30 and not blackFlag:   # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -122,7 +123,7 @@ class Vision:
             pixel = image[startY][x]
 
             # If black pixel
-            if pixel < 50:
+            if pixel < 30:
                 continue
 
             # White edge was found! Let's look for its right edge
@@ -131,12 +132,12 @@ class Vision:
                 pixel = image[startY][i]
 
                 # If black pixel
-                if pixel < 50 and not lowFlag:
+                if pixel < 30 and not lowFlag:
                     lowFlag = True
                     continue
 
                 # If low flag has been set, we've found a right edge!
-                if pixel >= 50 and lowFlag:
+                if pixel >= 30 and lowFlag:
                     sideLength = i - x
                     break
             break
@@ -148,7 +149,7 @@ class Vision:
         # Find top edge
         for y in reversed(range(0, startY)):
             # Check if top edge was found
-            if image[y][x + sideLength // 2] >= 50:
+            if image[y][x + sideLength // 2] >= 30:
                 break
         else:
             # Top edge was not found
@@ -159,7 +160,7 @@ class Vision:
         x += sideLength // 2
         while x < image.shape[1]:
             # If black pixel, end of word
-            if image[y][x] < 50:
+            if image[y][x] < 30:
                 break
 
             # Otherwise, increment word
@@ -167,7 +168,7 @@ class Vision:
 
             # Find left edge of current letterbox
             for i in reversed(range(x - sideLength, x)):
-                if image[startY][i] >= 50:
+                if image[startY][i] >= 30:
                     break
 
             # Jump into next char

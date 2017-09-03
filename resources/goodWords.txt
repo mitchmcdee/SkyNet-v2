@@ -353,6 +353,7 @@ piano
 picture
 pie
 pig
+program
 protein
 pigsty
 premium
@@ -452,6 +453,7 @@ snail
 snorkel
 snowman
 soap
+symptom
 sock
 socks
 sofa
@@ -470,6 +472,7 @@ stern
 stilts
 stinger
 stop
+traffic
 straw
 travel
 string

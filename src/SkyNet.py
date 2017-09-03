@@ -72,8 +72,8 @@ while(True):
     print(state, wordLengths)
 
     # width=6
-    # wordLengths=[7,5,4,5]
-    # state=list('o_____n_la__iosc__tgle__obva__prefr_')
+    # wordLengths=[4,7,6]
+    # state=list('____dw____ic____fo___tfa__spra__hiem')
 
     # Check state is reasonable
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths):
@@ -112,5 +112,5 @@ while(True):
             else:
                 break
 
-    # A problem occured, reset!
-    clickButton(*vision.RESET_BUTTON)
+            # A problem occured, reset!
+            clickButton(*vision.RESET_BUTTON)
