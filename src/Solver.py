@@ -65,7 +65,7 @@ class Solver:
                         solutionQueue.put(childState)
                         continue
 
-                    print(i, childState.words)
+                    # print(i, childState.words)
                     stack.append(childState)
 
         # Send death message

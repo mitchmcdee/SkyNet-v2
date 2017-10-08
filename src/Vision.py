@@ -13,7 +13,7 @@ class Vision:
                     ((0.141,0.247),0.248,0.1440,0.060,0.040),  # 4x4
                     ((0.115,0.234),0.192,0.1125,0.045,0.025),  # 5x5
                     ((0.093,0.221),0.160,0.0941,0.040,0.024),  # 6x6
-                    ((0.090,0.214),0.144,0.0845,0.035,0.021))  # 7x7
+                    ((0.089,0.215),0.138,0.0820,0.035,0.021))  # 7x7
     RESET_BUTTON =  (0.306,0.950)                              # Location of reset button
     AD_BUTTON =     (0.960,0.078)                              # Location of close ad button
 
@@ -72,7 +72,7 @@ class Vision:
 
     # Get a char from an image and add it to the output queue
     def getCharFromImage(self, index, image, outQueue):
-        conf = '-psm 10 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         charText = pytesseract.image_to_string(image, config=conf).lower()
         outQueue.put((index, charText))
 
@@ -100,7 +100,7 @@ class Vision:
                 topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
 
                 # Get image of char and save it to the state
-                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
+                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]                
                 state.append(Image.fromarray(charImage))
 
         # Loop over each char image and spawn a process to get its char form
@@ -140,7 +140,6 @@ class Vision:
                 # If low flag has been set, we've found a right edge!
                 if pixel >= 30 and lowFlag:
                     sideLength = i - x
-                    print('found right edge!', (i, startY), (x, startY), sideLength)
                     break
             break
 
