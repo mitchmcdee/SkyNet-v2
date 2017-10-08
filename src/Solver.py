@@ -30,8 +30,7 @@ class Solver:
 
     # Tear down processes on exit
     def __exit__(self, type, value, traceback):
-        [p.terminate() for p in self.processes]
-        [p.join() for p in self.processes]
+        [p.terminate() and p.join() for p in self.processes]
 
     # Add a bad word to avoid it being searched again
     def addBadWord(self, word):

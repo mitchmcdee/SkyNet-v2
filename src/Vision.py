@@ -187,21 +187,22 @@ class Vision:
 
         startX = 0                                      # Should be a valid x position for start of row
         startY = int(0.2 * croppedImage.shape[0])       # Should be a valid y position for start of row
-        startJump = int(0.2 * croppedImage.shape[0])    # Should be a valid y jump
+        heightJump = int(0.2 * croppedImage.shape[0])   # Should be a valid y jump
 
         words = []
         while startY < croppedImage.shape[0]:
             result = self.getWord(croppedImage, startX, startY)
+            print(result, startX, startY, heightJump)
 
             # If no words were found or we've read all we can from this row, go into next row
             if result is None or result[1] >= croppedImage.shape[1]:
-                startY += startJump
+                startY += heightJump
                 startX = 0
                 continue
 
             wordLength, endX, endY = result
             words.append(wordLength)
-            startJump = endY - startY
+            heightJump = endY - startY
             startX = endX
 
         return words

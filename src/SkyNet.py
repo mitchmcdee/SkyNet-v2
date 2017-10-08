@@ -66,6 +66,7 @@ while(True):
     # Ensure window has focus by clicking it
     clickButton(0, SCREEN_COORDS[1] / vision.height)
 
+    print('Getting board state')
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
     width = int(sqrt(len(state)))
@@ -102,6 +103,8 @@ while(True):
             # Get mouse coordinates for solution and enter them
             for i,path in enumerate(solutionState.path):
                 isValid = enterWord([mouseGrid[i] for i in path])
+
+                # TODO(mitch): detect when the thingo lagged out by testing for brown squares
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 if not isValid:
