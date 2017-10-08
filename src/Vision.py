@@ -47,7 +47,8 @@ class Vision:
         # Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
 
         # Return total whiteness of the screen
-        return sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
+        ratio = sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
+        return ratio
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
@@ -192,7 +193,7 @@ class Vision:
         words = []
         while startY < croppedImage.shape[0]:
             result = self.getWord(croppedImage, startX, startY)
-            print(result, startX, startY, heightJump)
+            # print(result, startX, startY, heightJump)
 
             # If no words were found or we've read all we can from this row, go into next row
             if result is None or result[1] >= croppedImage.shape[1]:

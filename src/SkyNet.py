@@ -26,6 +26,9 @@ def enterWord(word, speed=0):
     pyautogui.mouseUp()
     pyautogui.moveTo(0, SCREEN_COORDS[1], speed)
 
+    # Wait for animations to stop, necessary for computing board ratio
+    time.sleep(0.6)
+
     # Return true if entered word was valid (board states were different), else false
     return before != vision.getBoardRatio()
 
@@ -43,10 +46,11 @@ def clickButton(widthPercentage, heightPercentage):
     pyautogui.mouseDown()
     pyautogui.mouseUp()
 
-def reset():
+def reset(sleepTime=0):
     clickButton(*vision.AD_BUTTON)
     clickButton(*vision.RESET_BUTTON)
     clickButton(0, SCREEN_COORDS[1] / vision.height)
+    time.sleep(sleepTime)
 
 ################################################################################
 
@@ -63,9 +67,6 @@ while before == after:
 
 # Play the game!
 while(True):
-    # Ensure window has focus by clicking it
-    clickButton(0, SCREEN_COORDS[1] / vision.height)
-
     print('Getting board state')
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
@@ -79,7 +80,7 @@ while(True):
     # Check state is reasonable
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths):
         print('Invalid state, resetting')
-        reset()
+        reset(0.5)
         continue
 
     # Generate mouse grid
@@ -108,7 +109,8 @@ while(True):
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 if not isValid:
-                    solver.addBadWord(('').join([solutionState.allStates[i][j] for j in path]))
+                    badWord = ('').join([solutionState.allStates[i][j] for j in path])
+                    solver.addBadWord(badWord)
                     break
 
             # Else if no break, all words in solution were entered, exit out of entering solutions
@@ -116,4 +118,4 @@ while(True):
                 break
 
             # A problem occured, reset!
-            clickButton(*vision.RESET_BUTTON)
+            reset(0.5)

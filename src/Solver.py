@@ -4,6 +4,7 @@ from math import ceil
 from multiprocessing import Pool, Queue, Process
 from Trie import Trie, TrieNode
 from State import State, StateNode
+from collections import Counter
 
 class Solver:
     def __init__(self, initialState, wordLengths, badWords = []):
@@ -15,12 +16,22 @@ class Solver:
         # Generate Trie
         self.trie = Trie()
         numWords = 0
-        # with open('../resources/bigWords.txt', 'r') as f:
-        with open('../resources/goodWords.txt', 'r') as f:
+        with open('../resources/bigWords.txt', 'r') as f:
+        # with open('../resources/goodWords.txt', 'r') as f:
+        # with open('../resources/norvigWordsAll.txt', 'r') as f:
             for line in f:
                 word = line.strip('\n')
+                
                 if len(word) not in self.wordLengths:
                     continue
+
+                stateCounter = Counter(initialState)
+                wordCounter = Counter(word)
+                stateCounter.subtract(wordCounter)
+
+                if any(v < 0 for v in stateCounter.values()):
+                    continue
+
                 numWords += self.trie.addWord(word)
         print('Added ' + str(numWords) + ' words to trie')
 
@@ -55,6 +66,7 @@ class Solver:
                     stack.append(childState)
 
         # Send death message
+        print(i, 'is finished, exiting!')
         solutionQueue.put(i)
 
     # Solve the current level
@@ -80,9 +92,14 @@ class Solver:
             p.start()
 
         # Keep looping while there are workers alive
-        while any([p.is_alive() for p in self.processes]):
+        while True:
             solution = solutionQueue.get(1)
+
+            # If there's no solution, check there are still workers alive, else exit
             if solution is None:
+                if all([not p.is_alive() for p in self.processes]):
+                    break
+
                 continue
 
             # Check if was a death message
@@ -95,4 +112,5 @@ class Solver:
             if not solution.words.isdisjoint(self.badWords):
                 continue
 
+            print('Yielding solution:', solution.words)
             yield solution
