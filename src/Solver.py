@@ -16,8 +16,8 @@ class Solver:
         # Generate Trie
         self.trie = Trie()
         numWords = 0
-        with open('../resources/bigWords.txt', 'r') as f:
-        # with open('../resources/goodWords.txt', 'r') as f:
+        # with open('../resources/bigWords.txt', 'r') as f:
+        with open('../resources/goodWords.txt', 'r') as f:
         # with open('../resources/norvigWordsAll.txt', 'r') as f:
             for line in f:
                 word = line.strip('\n')
@@ -56,13 +56,16 @@ class Solver:
                 for path in root.getValidPaths(self.trie, state):
                     childState = state.getRemovedPathState(path)
 
-                    print(i, childState.words)
+                    # Check solution doesn't contain any bad words
+                    if not childState.words.isdisjoint(self.badWords):
+                        continue
 
                     # If there are no more words, we've found a complete solution
                     if len(childState.wordLengths) == 0:
                         solutionQueue.put(childState)
                         continue
 
+                    print(i, childState.words)
                     stack.append(childState)
 
         # Send death message
@@ -97,6 +100,7 @@ class Solver:
 
             # If there's no solution, check there are still workers alive, else exit
             if solution is None:
+                # TODO(mitch): fix this. it infinite loops when all processes are done
                 if all([not p.is_alive() for p in self.processes]):
                     break
 

@@ -121,7 +121,7 @@ class Vision:
         # Find starting X and letterbox sideLength
         sideLength = None
         for x in range(startX, image.shape[1]):
-            pixel = image[startY][x]
+            pixel = image[startY][x][0]
 
             # If black pixel
             if pixel < 30:
@@ -130,7 +130,7 @@ class Vision:
             # White edge was found! Let's look for its right edge
             lowFlag = False
             for i in range(x, min(image.shape[1], x + int(0.1 * image.shape[1]))):
-                pixel = image[startY][i]
+                pixel = image[startY][i][0]
 
                 # If black pixel
                 if pixel < 30 and not lowFlag:
@@ -140,6 +140,7 @@ class Vision:
                 # If low flag has been set, we've found a right edge!
                 if pixel >= 30 and lowFlag:
                     sideLength = i - x
+                    print('found right edge!', (i, startY), (x, startY), sideLength)
                     break
             break
 
@@ -150,7 +151,7 @@ class Vision:
         # Find top edge
         for y in reversed(range(0, startY)):
             # Check if top edge was found
-            if image[y][x + sideLength // 2] >= 30:
+            if image[y][x + sideLength // 2][0] >= 30:
                 break
         else:
             # Top edge was not found
@@ -161,15 +162,16 @@ class Vision:
         x += sideLength // 2
         while x < image.shape[1]:
             # If black pixel, end of word
-            if image[y][x] < 30:
+            if image[y][x][0] < 30:
                 break
 
             # Otherwise, increment word
             wordLength += 1
+            # print(wordLength, x, sideLength)
 
             # Find left edge of current letterbox
             for i in reversed(range(x - sideLength, x)):
-                if image[startY][i] >= 30:
+                if image[startY][i][0] >= 30:
                     break
 
             # Jump into next char
@@ -211,10 +213,10 @@ class Vision:
     # Get board state from the current screen
     def getBoardState(self):
         # Get screenshot of game state
-        image = self.getScreenImage()
+        image = np.array(self.getScreenImage())
 
         # Convert image to grayscale
-        grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        grayImage = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
         # Image.fromarray(grayImage).show()
 
@@ -222,7 +224,7 @@ class Vision:
         chars = self.getCharsFromImage(grayImage)
 
         # Get a list of word lengths
-        words = self.getWordLengthsFromImage(grayImage)
+        words = self.getWordLengthsFromImage(image)
 
         # Return state
         return chars, words
