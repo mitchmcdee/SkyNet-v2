@@ -18,7 +18,6 @@ class Solver:
         numWords = 0
         # with open('../resources/bigWords.txt', 'r') as f:
         with open('../resources/goodWords.txt', 'r') as f:
-        # with open('../resources/norvigWordsAll.txt', 'r') as f:
             for line in f:
                 word = line.strip('\n')
                 
@@ -65,7 +64,7 @@ class Solver:
                         solutionQueue.put(childState)
                         continue
 
-                    # print(i, childState.words)
+                    print(i, childState.words)
                     stack.append(childState)
 
         # Send death message
