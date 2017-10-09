@@ -98,18 +98,21 @@ while(True):
 
             mouseGrid.append((x, y))
 
+    startTime = time.time()
+
     # Loop over valid solutions to try them all
     with Solver(state, wordLengths) as solver:
-        for solutionState in solver.getSolutions():
+        for solution in solver.getSolutions():
+            print('Found solution in (' + str(time.time() - startTime) + 's):', solution.words)
             # Get mouse coordinates for solution and enter them
-            for i,path in enumerate(solutionState.path):
+            for i,path in enumerate(solution.path):
                 isValid = enterWord([mouseGrid[i] for i in path])
 
                 # TODO(mitch): detect when the thingo lagged out by testing for brown squares
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 if not isValid:
-                    badWord = ('').join([solutionState.allStates[i][j] for j in path])
+                    badWord = ('').join([solution.allStates[i][j] for j in path])
                     solver.addBadWord(badWord)
                     break
 

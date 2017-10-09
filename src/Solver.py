@@ -116,5 +116,4 @@ class Solver:
             if not solution.words.isdisjoint(self.badWords):
                 continue
 
-            print('Yielding solution:', solution.words)
             yield solution
