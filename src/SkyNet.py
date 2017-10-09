@@ -74,7 +74,7 @@ while(True):
     print(state, wordLengths)
 
     # width=6
-    # wordLengths=[4,7,6]
+    # wordLengths=[3,6,4,7,6,5,5,4,4,5]
     # state=list('____dw____ic____fo___tfa__spra__hiem')
 
     # Check state is reasonable
@@ -105,8 +105,8 @@ while(True):
     with Solver(state, wordLengths) as solver:
         for solution in solver.getSolutions():
             # Compute time it took to find a solution
-            solutionTime = str(round(time.time() - startTime, 6))
-            print(f'Found solution in ({solutionTime}s): {solution.words}')
+            solutionTime = str(round(time.time() - startTime, 2))
+            print(f'{solutionTime}s - Testing solution: {solution.words}')
             
             # Get mouse coordinates for solution and enter them
             for i,path in enumerate(solution.path):
@@ -122,8 +122,11 @@ while(True):
 
             # Else if no break, all words in solution were entered, exit out of entering solutions
             else:
-                break
+                if len(solution.words) == len(wordLengths):
+                    break
+
+            if i == 0 and not isValid:
+                continue
 
             # A problem occured, reset!
             reset(0.5)
-            startTime = time.time()

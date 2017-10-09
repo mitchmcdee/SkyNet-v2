@@ -1,7 +1,7 @@
 import sys
 import os
 from math import ceil
-from multiprocessing import Pool, Queue, Process
+from multiprocessing import Pool, Queue, Process, Manager
 from Trie import Trie, TrieNode
 from State import State, StateNode
 from collections import Counter
@@ -9,7 +9,9 @@ from collections import Counter
 class Solver:
     def __init__(self, initialState, wordLengths, badWords = []):
         self.processes = []
-        self.badWords = set()               # Set of words not to search
+        manager = Manager()            # TODO(mitch): profile this and see if its performant
+        self.badWords = self.manager.dict() # Set of words not to search
+        self.seenWords = self.manager.dict() # Set of words already seen
         self.initialState = initialState    # Initial state of board
         self.wordLengths = wordLengths      # List of word lengths to look for
 
@@ -44,7 +46,7 @@ class Solver:
 
     # Add a bad word to avoid it being searched again
     def addBadWord(self, word):
-        self.badWords.add(word.lower())
+        self.badWords[word] = 1
 
     # Worker which solves states and sends complete solutions to SolutionQueue
     def SolvingWorker(self, i, stack, solutionQueue):
@@ -54,17 +56,31 @@ class Solver:
             for root in state.getValidRoots(self.trie):
                 for path in root.getValidPaths(self.trie, state):
                     childState = state.getRemovedPathState(path)
+                    childWord = state.getWord(path)
 
                     # Check solution doesn't contain any bad words
-                    if not childState.words.isdisjoint(self.badWords):
+                    if any(w in self.badWords for w in childState.words):
                         continue
 
                     # If there are no more words, we've found a complete solution
                     if len(childState.wordLengths) == 0:
+                        solutions = []
+                        try:
+                            while True:
+                                solutions.append(solutionQueue.get_nowait())
+                        except:
+                            pass
                         solutionQueue.put(childState)
+                        [solutionQueue.put(s) for s in solutions]
                         continue
 
-                    print(i, childState.words)
+                        # TODO (mitch): clean up everything in this file and comment
+
+                    elif childWord not in self.seenWords:
+                        solutionQueue.put(childState)
+                        self.seenWords[childWord] = 1
+
+                    # print(i, childState.words)
                     stack.append(childState)
 
         # Send death message
@@ -76,12 +92,25 @@ class Solver:
         solutionQueue = Queue()
         numProcesses = max(1, os.cpu_count() - 1) # Ensure stability
         initialState = State(self.initialState, self.wordLengths)
+        seenWords = set()
 
         # Generate all root states
         rootStates = []
         for root in initialState.getValidRoots(self.trie):
                 for path in root.getValidPaths(self.trie, initialState):
-                    rootStates.append(initialState.getRemovedPathState(path))
+                    childState = initialState.getRemovedPathState(path)
+                    childWord = initialState.getWord(path)
+                    
+                    # If there are no more words, we've found a complete solution
+                    if len(childState.wordLengths) == 0:
+                        solutionQueue.put(childState)
+                        continue
+
+                    elif childWord not in self.seenWords:
+                        solutionQueue.put(childState)
+                        self.seenWords[childWord] = 1
+
+                    rootStates.append(childState)
 
         # Split root states up evenly to distribute to processes
         splitStates = [rootStates[i::numProcesses] for i in range(numProcesses)]
@@ -112,7 +141,7 @@ class Solver:
                 continue
 
             # Check solution doesn't contain any bad words
-            if not solution.words.isdisjoint(self.badWords):
+            if any(w in self.badWords for w in solution.words):
                 continue
 
             yield solution
