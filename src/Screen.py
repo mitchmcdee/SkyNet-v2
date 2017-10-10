@@ -1,9 +1,15 @@
 import curses
 import os
 from threading import Thread
+import time
+import math
 
 class Screen:
     def __init__(self):
+        # Clear solution and worker log files
+        with open('solutions.log', 'w'), open('workers.log', 'w'):
+            pass
+
         # Create screen
         self.screen = curses.initscr()
         self.screen.clear()
@@ -17,31 +23,63 @@ class Screen:
         self.solutionWindow.border()
         self.workerWindow.border()
 
-        # tThreads to handle window refresh
-        thread = Thread(target=self.update, args=())
-        thread.daemon = True
-        thread.start()
-        thread.join()
+        # Threads to handle window refresh
+        self.updateThread = Thread(target=self.update)
+        self.updateThread.daemon = True
+        self.running = True
+        self.updateThread.start()
 
     def update(self):
-        while True:
+        while self.running:
+            BORDER_PADDING = 1
             height, width = self.screen.getmaxyx()
-            divider = width // 2
+            divider = width // 2 - BORDER_PADDING * 2
+            curses.resizeterm(height, width)
 
             with open('solutions.log', 'r') as s, open('workers.log', 'r') as w:
+                solutionWrapLines = 0
+                workerWrapLines = 0
+
+                # TODO(mitch): clean this code up its U-G-L-Y, boilerplate
+
                 # Add tail lines to solution window
-                for i, line in enumerate(self.tail(s, 2)):
-                    self.solutionWindow.addstr(i + 1, 1, line)
+                for output in reversed(self.tail(s, height - BORDER_PADDING * 2)):
+                    numLines = math.ceil(len(output) / divider)
+
+                    for i in reversed(range(numLines)):
+                        y = height - 2 - solutionWrapLines - (numLines - 1 - i)
+                        if y < BORDER_PADDING:
+                            break
+                        line = output[i * divider : (i + 1) * divider]
+                        self.solutionWindow.addstr(y, BORDER_PADDING, line)
+
+                    solutionWrapLines += numLines
 
                 # Add tail lines to worker window
-                for i, line in enumerate(self.tail(w, 2)):
-                    self.workerWindow.addstr(i + 1, 1, line)
+                for output in reversed(self.tail(w, height - BORDER_PADDING * 2)):
+                    numLines = math.ceil(len(output) / divider)
+
+                    for i in reversed(range(numLines)):
+                        y = height - BORDER_PADDING * 2 - workerWrapLines - (numLines - 1 - i)
+                        if y < BORDER_PADDING:
+                            break
+                        line = output[i * divider : (i + 1) * divider]
+                        self.workerWindow.addstr(y, BORDER_PADDING, line)
+
+                    workerWrapLines += numLines
 
                 # Refresh windows
                 self.solutionWindow.border()
                 self.workerWindow.border()
                 self.solutionWindow.refresh()
                 self.workerWindow.refresh()
+
+    def exit(self):
+        self.running = False
+        self.updateThread.join()
+        del self.solutionWindow
+        del self.workerWindow
+        curses.endwin()
 
     # Author: glenbot
     # Source: https://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail

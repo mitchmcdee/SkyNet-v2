@@ -26,6 +26,7 @@ adequate
 adjust
 advanced
 advice
+advise
 adviser
 advocate
 aerial
@@ -35,7 +36,9 @@ afford
 afraid
 against
 aircraft
+airline
 airport
+alcohol
 alliance
 almost
 already
@@ -56,6 +59,7 @@ answer
 antenna
 anvil
 anymore
+anyone
 anyway
 anywhere
 apparent
@@ -94,6 +98,7 @@ attack
 attend
 attitude
 attorney
+attract
 auction
 audience
 auditor
@@ -234,6 +239,7 @@ change
 changing
 channel
 chapter
+characterize
 charge
 charity
 cheek
@@ -309,7 +315,9 @@ congress
 connect
 consensus
 consent
+conservative
 consider
+considerable
 constant
 construction
 consume
@@ -394,10 +402,12 @@ declare
 decline
 decrease
 deep
+deeply
 defeat
 defend
 defender
 defense
+deficit
 define
 degree
 delight
@@ -408,6 +418,7 @@ democrat
 density
 dentist
 depend
+dependent
 deposit
 deputy
 derive
@@ -444,6 +455,7 @@ discuss
 discussion
 dismiss
 display
+disposal
 distance
 distant
 distinct
@@ -532,6 +544,7 @@ engineering
 enhance
 enormoous
 enormous
+enough
 entire
 entirely
 entrance
@@ -545,8 +558,10 @@ escape
 eskimo
 essence
 essentially
+estate
 estimate
 ethics
+ethnic
 european
 evaluate
 everyday
@@ -564,6 +579,7 @@ exhibit
 existing
 expect
 expectation
+expense
 experience
 expert
 explain
@@ -640,6 +656,7 @@ founder
 fourth
 fraction
 freedom
+freeze
 french
 frequent
 friend
@@ -678,6 +695,7 @@ golf
 government
 governor
 graduate
+grammar
 grapes
 grass
 greatest
@@ -685,6 +703,7 @@ grenade
 grocery
 ground
 growing
+growth
 guardian
 guitar
 gun
@@ -746,6 +765,7 @@ igloo
 ignore
 illegal
 illness
+illustrate
 imagine
 impact
 import
@@ -766,6 +786,7 @@ infinity
 inform
 initially
 injury
+innocent
 inquiry
 insect
 inside
@@ -980,6 +1001,7 @@ narrow
 nation
 national
 native
+natural
 naturally
 nearby
 nearly
@@ -990,6 +1012,7 @@ needle
 negative
 neighbor
 neither
+nervous
 network
 nevertheless
 no
@@ -1070,6 +1093,7 @@ panda
 parent
 parish
 parking
+participant
 participate
 particle
 particular
@@ -1099,6 +1123,7 @@ percentage
 perform
 perhaps
 period
+permit
 person
 personal
 perspective
@@ -1126,6 +1151,7 @@ platform
 player
 please
 pleasure
+plenty
 pliers
 plum
 pocket
@@ -1157,6 +1183,7 @@ pregnant
 premise
 premium
 preparation
+prepare
 prescription
 presence
 preserve
@@ -1175,6 +1202,7 @@ prism
 prison
 prisoner
 privacy
+private
 problem
 process
 produce
@@ -1259,6 +1287,7 @@ region
 regional
 regulate
 reinforce
+reject
 relate
 relation
 relationship
@@ -1410,6 +1439,7 @@ sing
 singer
 single
 sink
+sister
 sit
 skirt
 skis
@@ -1437,6 +1467,7 @@ soldier
 solution
 somebody
 somehow
+someone
 somewhat
 soup
 south
@@ -1533,8 +1564,10 @@ symbol
 symbolic
 sympathy
 symptom
+system
 table
 tablespoon
+tactic
 tail
 talent
 talk
@@ -1547,6 +1580,7 @@ teacher
 teaching
 teapot
 teardrop
+teaspoon
 technique
 teenager
 temple
@@ -1711,6 +1745,7 @@ winter
 witch
 withdraw
 within
+without
 witness
 wolf
 wonder

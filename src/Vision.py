@@ -6,17 +6,18 @@ import pytesseract
 from multiprocessing import Process, Queue
 from PIL import Image
 
+
 class Vision:
     # topleft coord %, mid distance x %, mid distance y %, width x %, width y %
-    GRID_CENTRES = (((0.270,0.320),0.490,0.2900,0.120,0.080),  # 2x2
-                    ((0.190,0.265),0.320,0.1900,0.080,0.060),  # 3x3
-                    ((0.141,0.247),0.248,0.1440,0.060,0.040),  # 4x4
-                    ((0.115,0.234),0.192,0.1125,0.045,0.025),  # 5x5
-                    ((0.093,0.221),0.160,0.0941,0.040,0.024),  # 6x6
-                    ((0.089,0.215),0.138,0.0820,0.035,0.021),  # 7x7
-                    ((0.087,0.212),0.106,0.0600,0.031,0.020))  # 8x8 TODO!!!!
-    RESET_BUTTON =  (0.306,0.950)                              # Location of reset button
-    AD_BUTTON =     (0.960,0.078)                              # Location of close ad button
+    GRID_CENTRES = (((0.270, 0.320), 0.490, 0.2900, 0.120, 0.080),  # 2x2
+                    ((0.190, 0.265), 0.320, 0.1900, 0.080, 0.060),  # 3x3
+                    ((0.141, 0.247), 0.248, 0.1440, 0.060, 0.040),  # 4x4
+                    ((0.115, 0.234), 0.192, 0.1125, 0.045, 0.025),  # 5x5
+                    ((0.093, 0.221), 0.160, 0.0941, 0.040, 0.024),  # 6x6
+                    ((0.089, 0.215), 0.138, 0.0820, 0.035, 0.021),  # 7x7
+                    ((0.087, 0.212), 0.106, 0.0600, 0.031, 0.020))  # 8x8 TODO!!!!
+    RESET_BUTTON = (0.306, 0.950)  # Location of reset button
+    AD_BUTTON = (0.960, 0.078)  # Location of close ad button
 
     def __init__(self, screenCoords):
         self.topLeft = [screenCoords[0], screenCoords[1]]
@@ -55,18 +56,18 @@ class Vision:
     def getNumBoxes(self, image):
         # Image.fromarray(image).show()
 
-        numBoxes = 0                            # number of boxes in the row
-        blackFlag = True                        # flag of whether we're currently on black pixels
-        startY = int(0.19 * self.height)       # height of the first row in the grid
+        numBoxes = 0  # number of boxes in the row
+        blackFlag = True  # flag of whether we're currently on black pixels
+        startY = int(0.19 * self.height)  # height of the first row in the grid
 
         for x in range(image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel >= 30 and blackFlag:       # we found a white grid!
+            if pixel >= 30 and blackFlag:  # we found a white grid!
                 blackFlag = False
                 numBoxes += 1
 
-            if pixel < 30 and not blackFlag:   # we found the end of the grid
+            if pixel < 30 and not blackFlag:  # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -84,7 +85,7 @@ class Vision:
 
         # If out of range, return empty list of chars
         if numBoxes - 2 >= len(Vision.GRID_CENTRES):
-            print('Number of boxes is out of grid range:', numBoxes)
+            # print('Number of boxes is out of grid range:', numBoxes)
             return []
 
         # Get grid centres and calculate their char widths
@@ -101,7 +102,7 @@ class Vision:
                 topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
 
                 # Get image of char and save it to the state
-                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]                
+                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
                 state.append(Image.fromarray(charImage))
 
         # Loop over each char image and spawn a process to get its char form
@@ -175,22 +176,22 @@ class Vision:
                     break
 
             # Jump into next char
-            x = int(i + sideLength * (3/2))
+            x = int(i + sideLength * (3 / 2))
 
         # Return word length and its final check position
-        return wordLength, x, int(y + sideLength * (3/2))
+        return wordLength, x, int(y + sideLength * (3 / 2))
 
     # Get a list of word lengths from the image
     def getWordLengthsFromImage(self, image):
         top = int(0.75 * self.height)
         bottom = int(0.90 * self.height)
-        croppedImage = image[top:bottom,:]
+        croppedImage = image[top:bottom, :]
 
         # Image.fromarray(croppedImage).show()
 
-        startX = 0                                      # Should be a valid x position for start of row
-        startY = int(0.2 * croppedImage.shape[0])       # Should be a valid y position for start of row
-        heightJump = int(0.2 * croppedImage.shape[0])   # Should be a valid y jump
+        startX = 0  # Should be a valid x position for start of row
+        startY = int(0.2 * croppedImage.shape[0])  # Should be a valid y position for start of row
+        heightJump = int(0.2 * croppedImage.shape[0])  # Should be a valid y jump
 
         words = []
         while startY < croppedImage.shape[0]:

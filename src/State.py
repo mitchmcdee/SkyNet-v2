@@ -4,6 +4,7 @@ from math import sqrt
 # Possible neighbour directions of each node in a State
 directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
+
 # State of
 class State():
     def __init__(self, state, wordLengths, path=[], words=set(), allStates=None):
@@ -38,7 +39,7 @@ class State():
     # Generates and returns a list of valid (i.e. can make a word) root nodes
     def getValidRoots(self, trie):
         # Loop over each of the top level nodes in a state
-        for i,v in enumerate(self.state):
+        for i, v in enumerate(self.state):
             # Skip over whitespaces (words don't start with whitespace)
             if v == '_':
                 continue
@@ -74,7 +75,7 @@ class State():
 
     # Return the word translation of the given path
     def getWord(self, path):
-        return ('').join([self.state[i] for i in path])
+        return ''.join([self.state[i] for i in path])
 
     # Generate and return a new State that removes the given path
     def getRemovedPathState(self, path):
@@ -85,7 +86,7 @@ class State():
             newState[i] = '_'
 
         # If tiles need to be dropped down, do so
-        for i,v in enumerate(newState):
+        for i, v in enumerate(newState):
             if v != '_':
                 continue
 
@@ -104,8 +105,9 @@ class State():
 
         return State(newState, newWordLengths, self.path[:] + [path], newWords, self.allStates[:] + [newState])
 
+
 # State Nodes are nodes contained in the valid paths of a State
-class StateNode():
+class StateNode:
     def __init__(self, index, value, parents, path):
         self.index = index
         self.value = value
