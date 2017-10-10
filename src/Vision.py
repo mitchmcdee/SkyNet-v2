@@ -36,9 +36,10 @@ class Vision:
         return pyautogui.screenshot(region=(*topLeft, width, height))
 
     # Gets board ratio of whiteness
-    def getBoardRatio(self):
+    def getBoardRatio(self, image=None):
         # Get screenshot of game state
-        image = np.array(self.getBoardImage())
+        if image is None:
+            image = np.array(self.getBoardImage())
 
         # Convert image to grayscale
         grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
@@ -216,10 +217,15 @@ class Vision:
         # Get screenshot of game state
         image = np.array(self.getScreenImage())
 
+        # TODO(mitch): something better than this please
+        if self.getBoardRatio(image) < 25:
+            return [], []
+
         # Convert image to grayscale
         grayImage = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
         # Image.fromarray(grayImage).show()
+        Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
 
         # Get a list of chars from the board state
         chars = self.getCharsFromImage(grayImage)

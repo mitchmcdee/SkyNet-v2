@@ -153,3 +153,4 @@ while True:
 
         # Shut down screen
         screen.exit()
+        time.sleep(0.5)

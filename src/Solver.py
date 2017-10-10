@@ -127,6 +127,9 @@ class Solver:
         # Split root states up evenly to distribute to processes
         splitStates = [rootStates[i::numProcesses] for i in range(numProcesses)]
 
+        # TODO(mitch): Utilise all workers! ones who run out are therefore useless! Use a worker pool??
+        # yes worker pool! give each ONE root and let it die!
+
         # Create Solving Workers and delegate them work
         for i in range(numProcesses):
             p = Process(target=self.SolvingWorker, args=(i, splitStates[i], solutionQueue))
