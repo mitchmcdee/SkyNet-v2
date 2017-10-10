@@ -29,6 +29,8 @@ class Screen:
         self.running = True
         self.updateThread.start()
 
+        #TODO(mitch): add resizing!
+
     def update(self):
         while self.running:
             BORDER_PADDING = 1

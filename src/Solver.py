@@ -88,7 +88,7 @@ class Solver:
 
                         # TODO (mitch): clean up everything in this file and comment
 
-                    elif len(childState.state) >= 25 and childWord not in self.seenWords:
+                    elif len(childState.state) > 25 and childWord not in self.seenWords:
                         solutionQueue.put(childState)
                         self.seenWords[childWord] = 1
 
@@ -117,7 +117,7 @@ class Solver:
                     solutionQueue.put(childState)
                     continue
 
-                elif len(childState.state) >= 25 and childWord not in self.seenWords:
+                elif len(childState.state) > 25 and childWord not in self.seenWords:
                     solutionQueue.put(childState)
                     self.seenWords[childWord] = 1
 
