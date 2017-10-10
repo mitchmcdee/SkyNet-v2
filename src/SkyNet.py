@@ -6,11 +6,22 @@ from math import sqrt
 from PIL import Image
 from Solver import Solver
 from Vision import Vision
+from Screen import Screen
+import logging
+
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('solutions.log')
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler) 
+logger.setLevel(logging.INFO)
 
 pyautogui.FAILSAFE = True          # Allows exiting the program by going to the top left of screen
 RETINA_DISPLAY = True              # Mitch has a macbook
 SCREEN_COORDS = [0, 46, 730, 1290] # Mitch's COORDS
 MENUBAR_HEIGHT = 44                # Mitch's menubar height
+
+#TODO(mitch): rewrite this as a class
 
 def enterWord(word, speed=0):
     # board ratio before entering word
@@ -54,6 +65,9 @@ def reset(sleepTime=0):
 
 ################################################################################
 
+# Set up output screen
+screen = Screen()
+
 # Set up computer vision
 vision = Vision(SCREEN_COORDS)
 
@@ -67,11 +81,11 @@ while before == after:
 
 # Play the game!
 while(True):
-    print('Getting board state')
+    logger.info('Getting board state')
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
     width = int(sqrt(len(state)))
-    print(state, wordLengths)
+    logger.info(f'state wordLengths')
 
     # width=6
     # wordLengths=[3,6,4,7,6,5,5,4,4,5]
@@ -79,7 +93,7 @@ while(True):
 
     # Check state is reasonable
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths):
-        print('Invalid state, resetting')
+        logger.info('Invalid state, resetting')
         reset(0.5)
         continue
 
@@ -106,7 +120,7 @@ while(True):
         for solution in solver.getSolutions():
             # Compute time it took to find a solution
             solutionTime = str(round(time.time() - startTime, 2))
-            print(f'{solutionTime}s - Testing solution: {solution.words}')
+            logger.info(f'{solutionTime}s - Entering: {solution.words}')
             
             # Get mouse coordinates for solution and enter them
             for i,path in enumerate(solution.path):

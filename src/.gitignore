@@ -1,2 +1,4 @@
 .screenshot*
 ..screenshot*
+*.log
+test.*

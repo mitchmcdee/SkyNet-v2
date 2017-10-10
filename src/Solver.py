@@ -5,20 +5,27 @@ from multiprocessing import Pool, Queue, Process, Manager
 from Trie import Trie, TrieNode
 from State import State, StateNode
 from collections import Counter
+import logging
+
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('workers.log')
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler) 
+logger.setLevel(logging.INFO)
 
 class Solver:
     def __init__(self, initialState, wordLengths, badWords = []):
         self.processes = []
-        manager = Manager()            # TODO(mitch): profile this and see if its performant
-        self.badWords = self.manager.dict() # Set of words not to search
-        self.seenWords = self.manager.dict() # Set of words already seen
+        manager = Manager()                 # TODO(mitch): profile this and see if its performant
+        self.badWords = manager.dict()      # Set of words not to search
+        self.seenWords = manager.dict()     # Set of words already seen
         self.initialState = initialState    # Initial state of board
         self.wordLengths = wordLengths      # List of word lengths to look for
 
         # Generate Trie
         self.trie = Trie()
         numWords = 0
-        # with open('../resources/bigWords.txt', 'r') as f:
         with open('../resources/goodWords.txt', 'r') as f:
             for line in f:
                 word = line.strip('\n')
@@ -34,7 +41,7 @@ class Solver:
                     continue
 
                 numWords += self.trie.addWord(word)
-        print('Added ' + str(numWords) + ' words to trie')
+        logger.info(f'Added {numWords} words to trie')
 
     # Return self on enter
     def __enter__(self):
@@ -80,15 +87,16 @@ class Solver:
                         solutionQueue.put(childState)
                         self.seenWords[childWord] = 1
 
-                    # print(i, childState.words)
+                    # logger.info(f'{i}: {childState.words}')
                     stack.append(childState)
 
         # Send death message
-        print(i, 'is finished, exiting!')
+        logger.info(f'{i} is finished, exiting!')
         solutionQueue.put(i)
 
     # Solve the current level
     def getSolutions(self):
+        logger.info('Getting solutions')
         solutionQueue = Queue()
         numProcesses = max(1, os.cpu_count() - 1) # Ensure stability
         initialState = State(self.initialState, self.wordLengths)
