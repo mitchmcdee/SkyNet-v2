@@ -4,7 +4,7 @@ from math import ceil
 from multiprocessing import Pool, Queue, Process, Manager
 from Trie import Trie, TrieNode
 from State import State, StateNode
-from collections import Counter
+from collections import Counter, deque
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,10 @@ class Solver:
         self.seenWords = manager.dict()  # Set of words already seen
         self.initialState = initialState  # Initial state of board
         self.wordLengths = wordLengths  # List of word lengths to look for
+
         self.solutionQueue = Queue()
+        self.testQueue = Queue()
+        self.deathQueue = Queue()
 
         # Generate Trie
         self.trie = Trie()
@@ -63,43 +66,36 @@ class Solver:
 
     # Worker which solves states and sends complete solutions to SolutionQueue
     def SolvingWorker(self, i, initialState):
-        logger.info(f'{i} is starting!')
         stack = [initialState]
         while len(stack) != 0:
             state = stack.pop()
+            # logger.info(str(i) + ' ' + str(len(stack)))
+
+            # Check solution doesn't contain any bad words
+            if any(w in self.badWords for w in state.words):
+                continue
 
             for root in state.getValidRoots(self.trie):
                 for path in root.getValidPaths(self.trie, state):
                     childState = state.getRemovedPathState(path)
                     childWord = state.getWord(path)
 
-                    # Check solution doesn't contain any bad words
-                    if any(w in self.badWords for w in childState.words):
-                        continue
-
                     # If there are no more words, we've found a complete solution
                     if len(childState.wordLengths) == 0:
-                        solutions = []
-                        try:
-                            while True:
-                                solutions.append(self.solutionQueue.get_nowait())
-                        except:
-                            pass
                         self.solutionQueue.put(childState)
-                        [self.solutionQueue.put(s) for s in solutions]
                         continue
-
                         # TODO (mitch): clean up everything in this file and comment
 
                     elif len(childState.state) > 25 and childWord not in self.seenWords:
-                        self.solutionQueue.put(childState)
+                        self.testQueue.put(childState)
                         self.seenWords[childWord] = 1
 
                     # logger.info(f'{i}: {childState.words}')
                     stack.append(childState)
 
         # Send death message
-        self.solutionQueue.put(i)
+        logger.info(f'{i} is sending death message!')
+        self.deathQueue.put(i)
 
     def startProcess(self, i, initialState):
         p = Process(target=self.SolvingWorker, args=(i, initialState))
@@ -111,10 +107,11 @@ class Solver:
     def getSolutions(self):
         logger.info('Getting solutions')
         numProcesses = max(1, os.cpu_count() - 1)  # Ensure stability
+        # numProcesses = 1
         initialState = State(self.initialState, self.wordLengths)
 
         # Generate all root states
-        rootStates = []
+        rootStates = deque()
         for root in initialState.getValidRoots(self.trie):
             for path in root.getValidPaths(self.trie, initialState):
                 childState = initialState.getRemovedPathState(path)
@@ -126,7 +123,7 @@ class Solver:
                     continue
 
                 elif len(childState.state) > 25 and childWord not in self.seenWords:
-                    self.solutionQueue.put(childState)
+                    self.testQueue.put(childState)
                     self.seenWords[childWord] = 1
 
                 # logger.info(f'pre: {childState.words}')
@@ -141,40 +138,50 @@ class Solver:
 
         # Create Solving Workers and delegate them work
         for i in range(min(numProcesses, len(rootStates))):
-            self.startProcess(i, rootStates.pop())
+            self.startProcess(i, rootStates.popleft())
 
         # Keep looping while there are workers alive
         activeWorkers = len(self.processes)
         latestWorker = activeWorkers - 1
         remainingTasks = len(rootStates)
         while True:
-            # If there are no workers alive, we're done!
-            if activeWorkers == 0:
-                break
-
-            solution = self.solutionQueue.get(1)
-
-            # If there's no solution, continue
-            if solution is None:
-                continue
-
-            # Check if was a death message
-            if type(solution) == int:
-                logger.info(f'{solution} is finished!')
-                p = self.processes[solution]
+            try:
+                death = self.deathQueue.get(0, timeout=0.1)
+            except:
+                pass
+            else:
+                logger.info(f'{death} is finished!')
+                p = self.processes[death]
                 p.terminate() and p.join()
                 activeWorkers -= 1
 
                 if remainingTasks > 0:
                     latestWorker += 1
-                    self.startProcess(latestWorker, rootStates.pop())
+                    self.startProcess(latestWorker, rootStates.popleft())
                     remainingTasks -= 1
                     activeWorkers += 1
+                    logger.info(f'{latestWorker} is starting! {activeWorkers} active workers and {remainingTasks} remaining tasks')
 
-                continue
+                # If there are no workers alive, we're done!
+                if activeWorkers == 0:
+                    break
 
-            # Check solution doesn't contain any bad words
-            if any(w in self.badWords for w in solution.words):
-                continue
 
-            yield solution
+            try:
+                solution = self.solutionQueue.get(0, timeout=0.1)
+            except:
+                pass
+            else:
+                if any(w in self.badWords for w in solution.words):
+                    continue    
+                yield solution
+
+
+            try:
+                test = self.testQueue.get(0, timeout=0.1)
+            except:
+                pass
+            else:
+                if any(w in self.badWords for w in test.words):
+                    continue    
+                yield test
