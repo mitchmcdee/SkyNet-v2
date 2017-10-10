@@ -21,12 +21,13 @@ class Solver:
         with open('workers.log', 'w'):
             pass
 
-        self.processes = []
+        self.processes = {}
         manager = Manager()  # TODO(mitch): profile this and see if its performant
         self.badWords = manager.dict()  # Set of words not to search
         self.seenWords = manager.dict()  # Set of words already seen
         self.initialState = initialState  # Initial state of board
         self.wordLengths = wordLengths  # List of word lengths to look for
+        self.solutionQueue = Queue()
 
         # Generate Trie
         self.trie = Trie()
@@ -54,14 +55,16 @@ class Solver:
 
     # Tear down processes on exit
     def __exit__(self, t, v, traceback):
-        [p.terminate() and p.join() for p in self.processes]
+        [p.terminate() and p.join() for p in self.processes.values()]
 
     # Add a bad word to avoid it being searched again
     def addBadWord(self, word):
         self.badWords[word] = 1
 
     # Worker which solves states and sends complete solutions to SolutionQueue
-    def SolvingWorker(self, i, stack, solutionQueue):
+    def SolvingWorker(self, i, initialState):
+        logger.info(f'{i} is starting!')
+        stack = [initialState]
         while len(stack) != 0:
             state = stack.pop()
 
@@ -79,29 +82,34 @@ class Solver:
                         solutions = []
                         try:
                             while True:
-                                solutions.append(solutionQueue.get_nowait())
+                                solutions.append(self.solutionQueue.get_nowait())
                         except:
                             pass
-                        solutionQueue.put(childState)
-                        [solutionQueue.put(s) for s in solutions]
+                        self.solutionQueue.put(childState)
+                        [self.solutionQueue.put(s) for s in solutions]
                         continue
 
                         # TODO (mitch): clean up everything in this file and comment
 
                     elif len(childState.state) > 25 and childWord not in self.seenWords:
-                        solutionQueue.put(childState)
+                        self.solutionQueue.put(childState)
                         self.seenWords[childWord] = 1
 
-                    logger.info(f'{i}: {childState.words}')
+                    # logger.info(f'{i}: {childState.words}')
                     stack.append(childState)
 
         # Send death message
-        solutionQueue.put(i)
+        self.solutionQueue.put(i)
+
+    def startProcess(self, i, initialState):
+        p = Process(target=self.SolvingWorker, args=(i, initialState))
+        self.processes[i] = p
+        p.daemon = True
+        p.start()
 
     # Solve the current level
     def getSolutions(self):
         logger.info('Getting solutions')
-        solutionQueue = Queue()
         numProcesses = max(1, os.cpu_count() - 1)  # Ensure stability
         initialState = State(self.initialState, self.wordLengths)
 
@@ -114,37 +122,37 @@ class Solver:
 
                 # If there are no more words, we've found a complete solution
                 if len(childState.wordLengths) == 0:
-                    solutionQueue.put(childState)
+                    self.solutionQueue.put(childState)
                     continue
 
                 elif len(childState.state) > 25 and childWord not in self.seenWords:
-                    solutionQueue.put(childState)
+                    self.solutionQueue.put(childState)
                     self.seenWords[childWord] = 1
 
-                logger.info(f'pre: {childState.words}')
+                # logger.info(f'pre: {childState.words}')
                 rootStates.append(childState)
 
-        # Split root states up evenly to distribute to processes
-        splitStates = [rootStates[i::numProcesses] for i in range(numProcesses)]
-
-        # TODO(mitch): Utilise all workers! ones who run out are therefore useless! Use a worker pool??
-        # yes worker pool! give each ONE root and let it die!
+        # TODO(mitch): this solution for delegating work to workers properly
+        # doesn't actually work. Only like 10% of the root states are actually
+        # valid words, so you'll quickly reduce down to the same 3 active workers
+        # you had originally anyway.
+        #
+        # you need to have some way of stealing stack elements from other processes.
 
         # Create Solving Workers and delegate them work
-        for i in range(numProcesses):
-            p = Process(target=self.SolvingWorker, args=(i, splitStates[i], solutionQueue))
-            self.processes.append(p)
-            p.daemon = True
-            p.start()
+        for i in range(min(numProcesses, len(rootStates))):
+            self.startProcess(i, rootStates.pop())
 
         # Keep looping while there are workers alive
         activeWorkers = len(self.processes)
+        latestWorker = activeWorkers - 1
+        remainingTasks = len(rootStates)
         while True:
             # If there are no workers alive, we're done!
             if activeWorkers == 0:
                 break
 
-            solution = solutionQueue.get(1)
+            solution = self.solutionQueue.get(1)
 
             # If there's no solution, continue
             if solution is None:
@@ -152,10 +160,17 @@ class Solver:
 
             # Check if was a death message
             if type(solution) == int:
+                logger.info(f'{solution} is finished!')
                 p = self.processes[solution]
                 p.terminate() and p.join()
                 activeWorkers -= 1
-                logger.info(f'{solution} is finished! {activeWorkers} workers remaining')
+
+                if remainingTasks > 0:
+                    latestWorker += 1
+                    self.startProcess(latestWorker, rootStates.pop())
+                    remainingTasks -= 1
+                    activeWorkers += 1
+
                 continue
 
             # Check solution doesn't contain any bad words
