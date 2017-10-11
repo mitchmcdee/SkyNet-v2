@@ -21,19 +21,18 @@ class Solver:
 
     def __init__(self):
         self.solutionQueue = Queue()
-        self.testQueue = Queue()
-        self.jobQueue = Queue()
-        self.jobLock = Lock()
+        self.testQueue =     Queue()
+        self.jobQueue =      Queue()
 
         m = Manager()               # TODO(mitch): profile this and see if its performant?
-        self.badWords = m.dict()    # Set of words not to search
-        self.seenWords = m.dict()   # Set of words already see
+        self.badWords   = m.dict()  # Set of words not to search
+        self.seenWords  = m.dict()  # Set of words already see
         self.trieEvents = m.dict()  # Set of worker ids that trigger a 'new trie' event
 
         # Start workers
         self.numWorkers = max(1, os.cpu_count() - 1)
         for i in range(self.numWorkers):
-            args = (i, self.trieEvents, self.badWords, self.seenWords, self.jobLock,
+            args = (i, self.trieEvents, self.badWords, self.seenWords,
                     self.jobQueue, self.testQueue, self.solutionQueue)
             p = Process(target=solvingWorker, args=args)
             p.daemon = True
@@ -130,7 +129,7 @@ class Solver:
                     yield test
 
 # Worker which solves states and sends solutions to main process
-def solvingWorker(i, trieEvents, badWords, seenWords, jobLock, jobQueue, testQueue, solutionQueue):
+def solvingWorker(i, trieEvents, badWords, seenWords, jobQueue, testQueue, solutionQueue):
     trie = None
     unfinishedJobs = {}
     while True:

@@ -35,6 +35,8 @@ class Vision:
         height = int(0.75 * self.height) - int(0.17 * self.height)
         return pyautogui.screenshot(region=(*topLeft, width, height))
 
+        # TODO(mitch): swap out screenshot for something a lot faster
+
     # Gets board ratio of whiteness
     def getBoardRatio(self, image=None):
         # Get screenshot of game state
