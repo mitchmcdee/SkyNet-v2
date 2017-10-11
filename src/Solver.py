@@ -7,7 +7,6 @@ from Trie import Trie
 from State import State
 from collections import Counter
 from multiprocessing import Process, Queue, Lock, Manager
-from queue import Empty, Full
 
 logger = logging.getLogger(__name__)
 handler = logging.FileHandler('workers.log')
@@ -164,7 +163,7 @@ def solvingWorker(i, trieEvents, badWords, seenWords, jobLock, jobQueue, testQue
             try:
                 jobQueue.put_nowait(v)
             except:
-                pass
+                break
             else:
                 del unfinishedJobs[k]
 
