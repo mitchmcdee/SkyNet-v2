@@ -89,6 +89,9 @@ while True:
     if vision.getBoardRatio() < 25:
         continue
 
+    # Clear screen
+    screen.clear()
+
     # Get level state and word lengths required
     logger.info('Getting board state')
     state, wordLengths = vision.getBoardState()
@@ -122,9 +125,6 @@ while True:
 
     # Keep track of time taking to generate solutions
     startTime = time.time()
-
-    # Clear screen
-    screen.clear()
 
     # Loop over valid solutions to try them all
     with solver as s:

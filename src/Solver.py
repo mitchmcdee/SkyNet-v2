@@ -22,18 +22,18 @@ class Solver:
     def __init__(self):
         self.solutionQueue = Queue()
         self.testQueue =     Queue()
-        self.jobQueue =      Queue()
 
         m = Manager()               # TODO(mitch): profile this and see if its performant?
         self.badWords   = m.dict()  # Set of words not to search
         self.seenWords  = m.dict()  # Set of words already see
         self.trieEvents = m.dict()  # Set of worker ids that trigger a 'new trie' event
+        self.jobList =    m.list()  # List of jobs for workers
 
         # Start workers
         self.numWorkers = max(1, os.cpu_count() - 1)
         for i in range(self.numWorkers):
             args = (i, self.trieEvents, self.badWords, self.seenWords,
-                    self.jobQueue, self.testQueue, self.solutionQueue)
+                    self.jobList, self.testQueue, self.solutionQueue)
             p = Process(target=solvingWorker, args=args)
             p.daemon = True
             p.start()
@@ -46,7 +46,7 @@ class Solver:
     def __exit__(self, t, v, traceback):
         try:
             while True:
-                jobQueue.get_nowait()
+                jobList.clear()
         except:
             pass
 
@@ -100,15 +100,12 @@ class Solver:
         with open('trie.pickle', 'wb') as f:
             pickle.dump(trie, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # Generate all root states
-        rootStates = getChildStates('pre', trie, initialState, self.seenWords, self.testQueue, self.solutionQueue)
-
         # Let processes know there's an updated pickle file
         for i in range(self.numWorkers):
             self.trieEvents[i] = True
 
-        # Fill job queue with root states
-        [self.jobQueue.put(state) for state in rootStates.values()]
+        # Generate all root states and fill job list
+        self.jobList.extend(getChildStates('pre', trie, initialState, self.seenWords, self.testQueue, self.solutionQueue))
 
         # Start yielding found solutions
         while True:
@@ -129,15 +126,20 @@ class Solver:
                     yield test
 
 # Worker which solves states and sends solutions to main process
-def solvingWorker(i, trieEvents, badWords, seenWords, jobQueue, testQueue, solutionQueue):
+def solvingWorker(i, trieEvents, badWords, seenWords, jobList, testQueue, solutionQueue):
     trie = None
-    unfinishedJobs = {}
+    unfinishedJobs = []
     while True:
         # Get a job
         try:
-            _,state = unfinishedJobs.popitem()
+            state = unfinishedJobs.pop()
         except:
-            state = jobQueue.get()
+            try:
+                while True:
+                    unfinishedJobs.append(jobList.pop())
+                    logger.info('yep1 ' + str(len(jobList)))
+            except:
+                continue
 
         # Check for updated trie event
         if trieEvents[i]:
@@ -151,24 +153,20 @@ def solvingWorker(i, trieEvents, badWords, seenWords, jobQueue, testQueue, solut
 
         # Ensure trie exists before continuing
         if trie is None:
-            unfinishedJobs[state.state] = state
+            unfinishedJobs.append(state)
             continue
 
         # Calculate child states
-        unfinishedJobs.update(getChildStates(i, trie, state, seenWords, testQueue, solutionQueue))
+        unfinishedJobs.extend(getChildStates(i, trie, state, seenWords, testQueue, solutionQueue))
 
-        # Add all new jobs to the job queue
-        for k,v in list(unfinishedJobs.items()):
-            try:
-                jobQueue.put_nowait(v)
-            except:
-                break
-            else:
-                del unfinishedJobs[k]
+        # If we have lots of jobs, give some away
+        if len(unfinishedJobs) > 50 and len(jobList) < 10:
+            jobList.append(unfinishedJobs.pop())
+            logger.info('yep2 ' + str(len(unfinishedJobs)) + ' ' + str(len(jobList)))
 
 # Generates all child solutions of a root state
 def getChildStates(i, trie, rootState, seenWords, testQueue, solutionQueue):
-    childStates = {}
+    childStates = []
     for root in rootState.getValidRoots(trie):
         for path in root.getValidPaths(trie, rootState):
             childState = rootState.getRemovedPathState(path)
@@ -184,6 +182,6 @@ def getChildStates(i, trie, rootState, seenWords, testQueue, solutionQueue):
                 testQueue.put(childState)
                 seenWords[childWord] = 1
 
-            logger.info(f'{i}: {childState.words}')
-            childStates[tuple(childState.state)] = childState
+            # logger.info(f'{i}: {childState.words}')
+            childStates.append(childState)
     return childStates
