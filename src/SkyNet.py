@@ -17,7 +17,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 pyautogui.FAILSAFE = True  # Allows exiting the program by going to the top left of screen
-RETINA_DISPLAY = True  # Mitch has a macbook
+IS_RETINA = True  # Mitch has a macbook
 SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's COORDS
 MENUBAR_HEIGHT = 44  # Mitch's menubar height
 
@@ -51,7 +51,7 @@ def clickButton(widthPercentage, heightPercentage):
     h = heightPercentage * vision.height
 
     # if on retina display, halve the mouse resolution due to scaling
-    if RETINA_DISPLAY:
+    if IS_RETINA:
         w /= 2
         h /= 2
 
@@ -59,18 +59,16 @@ def clickButton(widthPercentage, heightPercentage):
     pyautogui.mouseDown()
     pyautogui.mouseUp()
 
-
-def reset(sleepTime=0.0, screen=None):
+def reset():
     clickButton(*vision.AD_BUTTON)
     clickButton(*vision.RESET_BUTTON)
     clickButton(0, SCREEN_COORDS[1] / vision.height)
-    time.sleep(sleepTime)
 
 
 ################################################################################
 
 # Set up computer vision
-vision = Vision(SCREEN_COORDS)
+vision = Vision(SCREEN_COORDS, IS_RETINA)
 solver = Solver()
 screen = Screen()
 
@@ -84,6 +82,13 @@ while before == after:
 
 # Play the game!
 while True:
+    # Wait for any lingering animations
+    time.sleep(0.5)
+
+    # TODO(mitch): something better than this please
+    if vision.getBoardRatio() < 25:
+        continue
+
     # Get level state and word lengths required
     logger.info('Getting board state')
     state, wordLengths = vision.getBoardState()
@@ -97,7 +102,7 @@ while True:
     # Check state is reasonable
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths) or len(state) < 4:
         logger.info('Invalid state, resetting')
-        reset(0.5)
+        reset()
         continue
 
     # Generate mouse grid
@@ -109,7 +114,7 @@ while True:
             y = int((grid[0][1] + j * grid[2]) * vision.height) + MENUBAR_HEIGHT
 
             # if on retina display, halve the mouse resolution due to scaling
-            if RETINA_DISPLAY:
+            if IS_RETINA:
                 x /= 2
                 y /= 2
 
@@ -150,7 +155,5 @@ while True:
                 continue
 
             # A problem occurred, reset!
-            reset(0.5)
-
-        # Wait for final animation to complete (TODO(mitch): reset?)
-        time.sleep(0.5)
+            reset()
+            time.sleep(0.5)

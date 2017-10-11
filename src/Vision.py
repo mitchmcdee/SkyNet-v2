@@ -1,5 +1,5 @@
 import numpy as np
-import pyautogui
+from mss import mss
 import time
 import cv2
 import pytesseract
@@ -19,37 +19,53 @@ class Vision:
     RESET_BUTTON = (0.306, 0.950)  # Location of reset button
     AD_BUTTON = (0.960, 0.078)  # Location of close ad button
 
-    def __init__(self, screenCoords):
-        self.topLeft = [screenCoords[0], screenCoords[1]]
+    def __init__(self, screenCoords, isRetina):
+        self.isRetina = isRetina
+        self.left = screenCoords[0]
+        self.top = screenCoords[1]
         self.height = screenCoords[3] - screenCoords[1]
         self.width = screenCoords[2] - screenCoords[0]
+        self.capture = mss()
 
     # Takes a screenshot of the screen region
     def getScreenImage(self):
-        return pyautogui.screenshot(region=(*self.topLeft, self.width, self.height))
+        left = self.left
+        top = self.top
+        width = self.width
+        height = self.height
+
+        if self.isRetina:
+            left /= 2
+            top /= 2
+            width /= 2
+            height /= 2
+
+        return self.capture.grab({'left': left, 'top': top, 'width': width, 'height': height})
 
     # Takes a screenshot of the board region
     def getBoardImage(self):
-        topLeft = self.topLeft[0], int(0.17 * self.height)
+        left = self.left
+        top = self.top + int(0.18 * self.height)
         width = self.width
-        height = int(0.75 * self.height) - int(0.17 * self.height)
-        return pyautogui.screenshot(region=(*topLeft, width, height))
+        height = int(0.75 * self.height) - int(0.18 * self.height)
 
-        # TODO(mitch): swap out screenshot for something a lot faster
+        if self.isRetina:
+            left /= 2
+            top /= 2
+            width /= 2
+            height /= 2
+
+        return self.capture.grab({'left': left, 'top': top, 'width': width, 'height': height})
 
     # Gets board ratio of whiteness
-    def getBoardRatio(self, image=None):
-        # Get screenshot of game state
-        if image is None:
-            image = np.array(self.getBoardImage())
-
-        # Convert image to grayscale
-        grayImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    def getBoardRatio(self):
+        # Get screenshot of game board
+        board = np.array(self.getBoardImage())
+        grayImage = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
+        Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
 
         # Get height and width
         h, w = grayImage.shape
-
-        # Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
 
         # Return total whiteness of the screen
         ratio = sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
@@ -57,8 +73,6 @@ class Vision:
 
     # Scan first row in grid and return the number of boxes found
     def getNumBoxes(self, image):
-        # Image.fromarray(image).show()
-
         numBoxes = 0  # number of boxes in the row
         blackFlag = True  # flag of whether we're currently on black pixels
         startY = int(0.19 * self.height)  # height of the first row in the grid
@@ -66,11 +80,11 @@ class Vision:
         for x in range(image.shape[1]):
             pixel = image[startY][x]
 
-            if pixel >= 30 and blackFlag:  # we found a white grid!
-                blackFlag = False
+            if pixel >= 200 and blackFlag:  # we found a white grid!
                 numBoxes += 1
+                blackFlag = False
 
-            if pixel < 30 and not blackFlag:  # we found the end of the grid
+            if pixel < 200 and not blackFlag:  # we found the end of the grid
                 blackFlag = True
 
         return numBoxes
@@ -106,6 +120,7 @@ class Vision:
 
                 # Get image of char and save it to the state
                 charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
+                # Image.fromarray(charImage).save('../resources/debug/char-' + str(time.time()) + '.png')
                 state.append(Image.fromarray(charImage))
 
         # Loop over each char image and spawn a process to get its char form
@@ -217,17 +232,13 @@ class Vision:
     # Get board state from the current screen
     def getBoardState(self):
         # Get screenshot of game state
-        image = np.array(self.getScreenImage())
-
-        # TODO(mitch): something better than this please
-        if self.getBoardRatio(image) < 25:
-            return [], []
+        screen = self.getScreenImage()
+        image = cv2.cvtColor(np.array(screen), cv2.COLOR_BGRA2RGB)
+        Image.fromarray(image).save('../resources/debug/screen-' + str(time.time()) + '.png')
 
         # Convert image to grayscale
         grayImage = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
-        # Image.fromarray(grayImage).show()
-        Image.fromarray(grayImage).save('../resources/debug/' + str(time.time()) + '.png')
+        Image.fromarray(grayImage).save('../resources/debug/gray-' + str(time.time()) + '.png')
 
         # Get a list of chars from the board state
         chars = self.getCharsFromImage(grayImage)
