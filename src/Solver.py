@@ -67,7 +67,6 @@ class Solver:
 
     # Solve the current level
     def getSolutions(self, state, wordLengths):
-
         # Initialise trie tree
         self.trie = self.initialiseTrie(state, wordLengths)
 

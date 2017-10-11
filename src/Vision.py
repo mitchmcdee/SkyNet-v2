@@ -3,8 +3,13 @@ from mss import mss
 import time
 import cv2
 import pytesseract
-from multiprocessing import Process, Queue
+from multiprocessing import Pool
 from PIL import Image
+
+# Get a char from an image and add it to the output queue
+def getCharFromImage(image):
+    conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    return pytesseract.image_to_string(image, config=conf).lower()
 
 
 class Vision:
@@ -89,12 +94,6 @@ class Vision:
 
         return numBoxes
 
-    # Get a char from an image and add it to the output queue
-    def getCharFromImage(self, index, image, outQueue):
-        conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        charText = pytesseract.image_to_string(image, config=conf).lower()
-        outQueue.put((index, charText))
-
     # Get a list of chars from the image
     def getCharsFromImage(self, image):
         # Get number of boxes in the grid (along one side)
@@ -110,7 +109,7 @@ class Vision:
         width = (int(grid[3] * 2 * self.width), int(grid[4] * 2 * self.height))
 
         # Loop over each box in the grid and get its charImage
-        state = []
+        charImages = []
         for j in range(numBoxes):
             for i in range(numBoxes):
                 # Calculate top left coordinate for the current box
@@ -118,24 +117,12 @@ class Vision:
                 topLeft[0] = int((topLeft[0] + i * grid[1]) * self.width)
                 topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
 
-                # Get image of char and save it to the state
+                # Get image of char
                 charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
                 # Image.fromarray(charImage).save('../resources/debug/char-' + str(time.time()) + '.png')
-                state.append(Image.fromarray(charImage))
+                charImages.append(Image.fromarray(charImage))
 
-        # Loop over each char image and spawn a process to get its char form
-        outQueue = Queue()
-        processes = []
-        for i in range(len(state)):
-            p = Process(target=self.getCharFromImage, args=(i, state[i], outQueue))
-            processes.append(p)
-            p.start()
-
-        # Wait for pytesseract processes to finish
-        [p.join() for p in processes]
-
-        # Collect and return all char results
-        return [c[1] for c in sorted([outQueue.get() for _ in range(len(processes))], key=lambda x: x[0])]
+        return Pool().map(getCharFromImage, charImages)
 
     def getWord(self, image, startX, startY):
         # Find starting X and letterbox sideLength
