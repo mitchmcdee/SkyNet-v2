@@ -6,10 +6,6 @@ import math
 
 class Screen:
     def __init__(self):
-        # Clear solution and worker log files
-        with open('solutions.log', 'w'), open('workers.log', 'w'):
-            pass
-
         # Create screen
         self.screen = curses.initscr()
         self.screen.clear()
@@ -26,13 +22,15 @@ class Screen:
         # Threads to handle window refresh
         self.updateThread = Thread(target=self.update)
         self.updateThread.daemon = True
-        self.running = True
         self.updateThread.start()
+
+        # Clear log files
+        self.clear()
 
         #TODO(mitch): add resizing!
 
     def update(self):
-        while self.running:
+        while True:
             BORDER_PADDING = 1
             height, width = self.screen.getmaxyx()
             divider = width // 2 - BORDER_PADDING * 2
@@ -76,12 +74,10 @@ class Screen:
                 self.solutionWindow.refresh()
                 self.workerWindow.refresh()
 
-    def exit(self):
-        self.running = False
-        self.updateThread.join()
-        del self.solutionWindow
-        del self.workerWindow
-        curses.endwin()
+    def clear(self):
+        # Clear solution and worker log files
+        with open('solutions.log', 'w'), open('workers.log', 'w'):
+            pass
 
     # Author: glenbot
     # Source: https://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail

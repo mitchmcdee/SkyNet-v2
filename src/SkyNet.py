@@ -71,6 +71,8 @@ def reset(sleepTime=0.0, screen=None):
 
 # Set up computer vision
 vision = Vision(SCREEN_COORDS)
+solver = Solver()
+screen = Screen()
 
 # Wait for screen to become responsive (anrdoid emulator? osx? idek lol)
 before = None
@@ -82,11 +84,8 @@ while before == after:
 
 # Play the game!
 while True:
-    # Set up output screen
-    screen = Screen()
-
-    logger.info('Getting board state')
     # Get level state and word lengths required
+    logger.info('Getting board state')
     state, wordLengths = vision.getBoardState()
     width = int(sqrt(len(state)))
     logger.info(f'{state} {wordLengths}')
@@ -99,8 +98,6 @@ while True:
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths) or len(state) < 4:
         logger.info('Invalid state, resetting')
         reset(0.5)
-        # Shut down screen
-        screen.exit()
         continue
 
     # Generate mouse grid
@@ -121,9 +118,12 @@ while True:
     # Keep track of time taking to generate solutions
     startTime = time.time()
 
+    # Clear screen
+    screen.clear()
+
     # Loop over valid solutions to try them all
-    with Solver(state, wordLengths) as solver:
-        for solution in solver.getSolutions():
+    with solver as s:
+        for solution in s.getSolutions(state, wordLengths):
             # Compute time it took to find a solution
             solutionTime = str(round(time.time() - startTime, 2))
             logger.info(f'{solutionTime}s - Entering: {solution.words}')
@@ -137,7 +137,7 @@ while True:
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 if not isValid:
                     badWord = ''.join([solution.allStates[i][j] for j in path])
-                    solver.addBadWord(badWord)
+                    s.addBadWord(badWord)
                     break
 
             # Else if no break, all words in solution were entered, exit out of entering solutions
@@ -145,12 +145,12 @@ while True:
                 if len(solution.words) == len(wordLengths):
                     break
 
-            if i == 0 and not isValid:
+            # If we only entered one word incorrectly, we don't need to clear screen
+            if len(solution.path) > 0 and i == 0 and not isValid:
                 continue
 
             # A problem occurred, reset!
             reset(0.5)
 
-        # Shut down screen
-        screen.exit()
+        # Wait for final animation to complete (TODO(mitch): reset?)
         time.sleep(0.5)

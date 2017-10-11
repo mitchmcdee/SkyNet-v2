@@ -2,3 +2,4 @@
 ..screenshot*
 *.log
 test.*
+*.pickle
