@@ -69,7 +69,6 @@ def reset():
 
 # Set up computer vision
 vision = Vision(SCREEN_COORDS, IS_RETINA)
-solver = Solver()
 screen = Screen()
 
 # Wait for screen to become responsive (anrdoid emulator? osx? idek lol)
@@ -127,7 +126,7 @@ while True:
     startTime = time.time()
 
     # Loop over valid solutions to try them all
-    with solver as s:
+    with Solver() as s:
         for solution in s.getSolutions(state, wordLengths):
             # Compute time it took to find a solution
             solutionTime = str(round(time.time() - startTime, 2))

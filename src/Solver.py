@@ -20,23 +20,13 @@ class Solver:
     SEEN_THRESHOLD = 25 # Minimum state size that will yield any new words seen
 
     def __init__(self):
+        m = Manager()              # TODO(mitch): profile this and see if its performant?
+        self.badWords  = m.dict()  # Set of words not to search
+        self.seenWords = m.dict()  # Set of words already see
+        self.workers   = []        # List of workers
+
         self.solutionQueue = Queue()
-        self.testQueue =     Queue()
-
-        m = Manager()               # TODO(mitch): profile this and see if its performant?
-        self.badWords   = m.dict()  # Set of words not to search
-        self.seenWords  = m.dict()  # Set of words already see
-        self.trieEvents = m.dict()  # Set of worker ids that trigger a 'new trie' event
-        self.jobList =    m.list()  # List of jobs for workers
-
-        # Start workers
-        self.numWorkers = max(1, os.cpu_count() - 1)
-        for i in range(self.numWorkers):
-            args = (i, self.trieEvents, self.badWords, self.seenWords,
-                    self.jobList, self.testQueue, self.solutionQueue)
-            p = Process(target=solvingWorker, args=args)
-            p.daemon = True
-            p.start()
+        self.testQueue     = Queue()
 
     # Return self on enter
     def __enter__(self):
@@ -44,37 +34,15 @@ class Solver:
 
     # Clear queues and words on exit
     def __exit__(self, t, v, traceback):
-        try:
-            while True:
-                jobList.clear()
-        except:
-            pass
-
-        try:
-            while True:
-                solutionQueue.get_nowait()
-        except:
-            pass
-
-        try:
-            while True:
-                testQueue.get_nowait()
-        except:
-            pass
-
-        self.badWords.clear()
-        self.seenWords.clear()
+        [w.terminate() for w in self.workers]
+        [w.join() for w in self.workers]
 
     # Add a bad word to avoid it being searched again
     def addBadWord(self, word):
         self.badWords[word] = 1
 
-    # Solve the current level
-    def getSolutions(self, state, wordLengths):
-        logger.info('Getting solutions')
-        initialState = State(state, wordLengths)
-
-        # Generate trie tree
+    # Generates a trie tailored to the given state and word lengths and broadcasts it
+    def initialiseTrie(self, state, wordLengths):
         numWords = 0
         trie = Trie()
         with open('../resources/goodWords.txt', 'r') as f:
@@ -95,20 +63,31 @@ class Solver:
 
                 numWords += trie.addWord(word)
         logger.info(f'Added {numWords} words to trie')
+        return trie
 
-        # Create pickle of trie for processes
-        with open('trie.pickle', 'wb') as f:
-            pickle.dump(trie, f, protocol=pickle.HIGHEST_PROTOCOL)
+    # Solve the current level
+    def getSolutions(self, state, wordLengths):
 
-        # Let processes know there's an updated pickle file
-        for i in range(self.numWorkers):
-            self.trieEvents[i] = True
+        # Initialise trie tree
+        self.trie = self.initialiseTrie(state, wordLengths)
 
-        # Generate all root states and fill job list
-        self.jobList.extend(getChildStates('pre', trie, initialState, self.seenWords, self.testQueue, self.solutionQueue))
+        # Generate all root states
+        initialState = State(state, wordLengths)
+        rootStates = self.getChildStates(initialState)
 
-        # Start yielding found solutions
+        # Split root states up evenly to distribute to processes
+        numWorkers = max(1, os.cpu_count() - 1)
+        splitStates = [rootStates[i::numWorkers] for i in range(numWorkers)]
+
+        # Start workers
+        for i in range(numWorkers):
+            p = Process(target=self.solvingWorker, args=(splitStates[i],))
+            p.daemon = True
+            p.start()
+
+        # Yield found solutions
         while True:
+            # Check for complete solutions
             try:
                 solution = self.solutionQueue.get_nowait()
             except:
@@ -117,6 +96,7 @@ class Solver:
                 if solution is not None and all(w not in self.badWords for w in solution.words):
                     yield solution
 
+            # Check for test solutions
             try:
                 test = self.testQueue.get_nowait()
             except:
@@ -125,63 +105,36 @@ class Solver:
                 if test is not None and all(w not in self.badWords for w in test.words):
                     yield test
 
-# Worker which solves states and sends solutions to main process
-def solvingWorker(i, trieEvents, badWords, seenWords, jobList, testQueue, solutionQueue):
-    trie = None
-    unfinishedJobs = []
-    while True:
-        # Get a job
-        try:
-            state = unfinishedJobs.pop()
-        except:
-            try:
-                while True:
-                    unfinishedJobs.append(jobList.pop())
-                    logger.info('yep1 ' + str(len(jobList)))
-            except:
+    # Worker which solves states and sends solutions to main process
+    def solvingWorker(self, stack):
+        while len(stack) != 0:
+            state = stack.pop()
+
+            # Check state doesn't contain any bad words
+            if any(w in self.badWords for w in state.words):
                 continue
 
-        # Check for updated trie event
-        if trieEvents[i]:
-            with open('trie.pickle', 'rb') as f:
-                trie = pickle.load(f)
-            trieEvents[i] = False
+            # Calculate child states
+            stack.extend(self.getChildStates(state))
 
-        # Check state doesn't contain any bad words
-        if any(w in badWords for w in state.words):
-            continue
+    # Generates all child solutions of a root state
+    def getChildStates(self, state):
+        childStates = []
+        for root in state.getValidRoots(self.trie):
+            for path in root.getValidPaths(self.trie, state):
+                childState = state.getRemovedPathState(path)
+                childWord = state.getWord(path) 
 
-        # Ensure trie exists before continuing
-        if trie is None:
-            unfinishedJobs.append(state)
-            continue
+                # If there are no more words, we've found a complete solution
+                if len(childState.wordLengths) == 0:
+                    self.solutionQueue.put(childState)
+                    continue    
 
-        # Calculate child states
-        unfinishedJobs.extend(getChildStates(i, trie, state, seenWords, testQueue, solutionQueue))
+                # If we haven't seen the removed word before, test it
+                if childWord not in self.seenWords and len(childState.state) > Solver.SEEN_THRESHOLD:
+                    self.testQueue.put(childState)
+                    self.seenWords[childWord] = 1    
 
-        # If we have lots of jobs, give some away
-        if len(unfinishedJobs) > 50 and len(jobList) < 10:
-            jobList.append(unfinishedJobs.pop())
-            logger.info('yep2 ' + str(len(unfinishedJobs)) + ' ' + str(len(jobList)))
-
-# Generates all child solutions of a root state
-def getChildStates(i, trie, rootState, seenWords, testQueue, solutionQueue):
-    childStates = []
-    for root in rootState.getValidRoots(trie):
-        for path in root.getValidPaths(trie, rootState):
-            childState = rootState.getRemovedPathState(path)
-            childWord = rootState.getWord(path)
-
-            # If there are no more words, we've found a complete solution
-            if len(childState.wordLengths) == 0:
-                solutionQueue.put(childState)
-                continue
-
-            # If we haven't seen the removed word before, test it
-            if childWord not in seenWords and len(childState.state) > Solver.SEEN_THRESHOLD:
-                testQueue.put(childState)
-                seenWords[childWord] = 1
-
-            # logger.info(f'{i}: {childState.words}')
-            childStates.append(childState)
-    return childStates
+                logger.info(f'{childState.words}')
+                childStates.append(childState)
+        return childStates
