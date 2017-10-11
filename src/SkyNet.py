@@ -16,14 +16,13 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-pyautogui.FAILSAFE = True  # Allows exiting the program by going to the top left of screen
-IS_RETINA = True  # Mitch has a macbook
-SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's COORDS
-MENUBAR_HEIGHT = 44  # Mitch's menubar height
+pyautogui.FAILSAFE = True           # Allows exiting the program by moving mouse to top left of screen
+IS_RETINA = True                    # Mitch has a macbook
+SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 
+# TODO(mitch): rewrite this file as a class
 
-# TODO(mitch): rewrite this as a class
-
+# Enters the given word onto the board
 def enterWord(word, speed=0):
     # board ratio before entering word
     start = vision.getBoardRatio()
@@ -39,11 +38,10 @@ def enterWord(word, speed=0):
     pyautogui.moveTo(0, SCREEN_COORDS[1], speed)
 
     # Wait for animations to stop, necessary for computing board ratio
-    time.sleep(0.6)
+    time.sleep(0.25)
 
     # Return true if entered word was valid (board states were different), else false
     return start != vision.getBoardRatio()
-
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage):
@@ -59,15 +57,32 @@ def clickButton(widthPercentage, heightPercentage):
     pyautogui.mouseDown()
     pyautogui.mouseUp()
 
+# Resets the game board and exits any ads on screen
 def reset():
     clickButton(*vision.AD_BUTTON)
     clickButton(*vision.RESET_BUTTON)
     clickButton(0, SCREEN_COORDS[1] / vision.height)
 
+# Generates a mouse grid for clicking board tiles
+def generateMouseGrid(width):
+    grid = Vision.GRID_CENTRES[width - 2]
+    mouseGrid = []
+    for j in range(width):
+        for i in range(width):
+            x = int((grid[0][0] + i * grid[1]) * vision.width)
+            y = int((grid[0][1] + j * grid[2]) * vision.height) + SCREEN_COORDS[1]
+
+            # if on retina display, halve the mouse resolution due to scaling
+            if IS_RETINA:
+                x /= 2
+                y /= 2
+
+            mouseGrid.append((x, y))
+    return mouseGrid
 
 ################################################################################
 
-# Set up computer vision
+# Set up computer vision and screen
 vision = Vision(SCREEN_COORDS, IS_RETINA)
 screen = Screen()
 
@@ -84,6 +99,7 @@ while True:
     # Wait for any lingering animations
     time.sleep(0.5)
 
+    # Ensure screen contains a board
     # TODO(mitch): something better than this please
     if vision.getBoardRatio() < 25:
         continue
@@ -92,14 +108,9 @@ while True:
     screen.clear()
 
     # Get level state and word lengths required
-    logger.info('Getting board state')
     state, wordLengths = vision.getBoardState()
     width = int(sqrt(len(state)))
     logger.info(f'{state} {wordLengths}')
-
-    # width=1
-    # wordLengths=[1]
-    # state=list('h')
 
     # Check state is reasonable
     if width == 0 or width ** 2 != len(state) or len(state) != sum(wordLengths) or len(state) < 4:
@@ -108,19 +119,7 @@ while True:
         continue
 
     # Generate mouse grid
-    grid = Vision.GRID_CENTRES[width - 2]
-    mouseGrid = []
-    for j in range(width):
-        for i in range(width):
-            x = int((grid[0][0] + i * grid[1]) * vision.width)
-            y = int((grid[0][1] + j * grid[2]) * vision.height) + MENUBAR_HEIGHT
-
-            # if on retina display, halve the mouse resolution due to scaling
-            if IS_RETINA:
-                x /= 2
-                y /= 2
-
-            mouseGrid.append((x, y))
+    mouseGrid = generateMouseGrid(width)
 
     # Keep track of time taking to generate solutions
     startTime = time.time()
@@ -136,9 +135,8 @@ while True:
             for i, path in enumerate(solution.path):
                 isValid = enterWord([mouseGrid[i] for i in path])
 
-                # TODO(mitch): detect when the thingo lagged out by testing for brown squares?
-
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
+                # TODO(mitch): detect when the thingo lagged out by testing for brown squares?
                 if not isValid:
                     badWord = ''.join([solution.allStates[i][j] for j in path])
                     s.addBadWord(badWord)

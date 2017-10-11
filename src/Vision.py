@@ -21,8 +21,8 @@ class Vision:
                     ((0.093, 0.221), 0.160, 0.0941, 0.040, 0.024),  # 6x6
                     ((0.089, 0.215), 0.138, 0.0820, 0.035, 0.021),  # 7x7
                     ((0.087, 0.212), 0.106, 0.0600, 0.031, 0.020))  # 8x8 TODO!!!!
-    RESET_BUTTON = (0.306, 0.950)  # Location of reset button
-    AD_BUTTON = (0.960, 0.078)  # Location of close ad button
+    RESET_BUTTON = (0.306, 0.950)   # Location of reset button
+    AD_BUTTON = (0.960, 0.078)      # Location of close ad button
 
     def __init__(self, screenCoords, isRetina):
         self.isRetina = isRetina
@@ -67,7 +67,7 @@ class Vision:
         # Get screenshot of game board
         board = np.array(self.getBoardImage())
         grayImage = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
-        Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
+        # Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
 
         # Get height and width
         h, w = grayImage.shape
@@ -192,8 +192,6 @@ class Vision:
         bottom = int(0.90 * self.height)
         croppedImage = image[top:bottom, :]
 
-        # Image.fromarray(croppedImage).show()
-
         startX = 0  # Should be a valid x position for start of row
         startY = int(0.2 * croppedImage.shape[0])  # Should be a valid y position for start of row
         heightJump = int(0.2 * croppedImage.shape[0])  # Should be a valid y jump
@@ -221,11 +219,11 @@ class Vision:
         # Get screenshot of game state
         screen = self.getScreenImage()
         image = cv2.cvtColor(np.array(screen), cv2.COLOR_BGRA2RGB)
-        Image.fromarray(image).save('../resources/debug/screen-' + str(time.time()) + '.png')
+        # Image.fromarray(image).save('../resources/debug/screen-' + str(time.time()) + '.png')
 
         # Convert image to grayscale
         grayImage = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        Image.fromarray(grayImage).save('../resources/debug/gray-' + str(time.time()) + '.png')
+        # Image.fromarray(grayImage).save('../resources/debug/gray-' + str(time.time()) + '.png')
 
         # Get a list of chars from the board state
         chars = self.getCharsFromImage(grayImage)
