@@ -67,13 +67,13 @@ class Vision:
         # Get screenshot of game board
         board = np.array(self.getBoardImage())
         grayImage = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
-        # Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
+        Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
 
         # Get height and width
         h, w = grayImage.shape
 
         # Return total whiteness of the screen
-        ratio = sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
+        ratio = sum([1 if grayImage[y][x] >= 100 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
         return ratio
 
     # Scan first row in grid and return the number of boxes found

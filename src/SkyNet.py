@@ -38,10 +38,10 @@ def enterWord(word, speed=0.08):
     pyautogui.moveTo(0, SCREEN_COORDS[1], pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
-    time.sleep(0.3)
+    time.sleep(0.5)
 
     # Return true if entered word was valid (board states were different), else false
-    return abs(start - vision.getBoardRatio()) > (start // 100)
+    return abs(start - vision.getBoardRatio()) > (start // 200)
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage, speed=0.05):
@@ -129,21 +129,23 @@ while True:
         for solution in s.getSolutions(state, wordLengths):
             # Compute time it took to find a solution
             solutionTime = str(round(time.time() - startTime, 2))
-            logger.info(f'{solutionTime}s - Entering: {solution.words}')
+            logger.info(f'{solutionTime}s - Testing: {solution.words}')
 
             # Get mouse coordinates for solution and enter them
             for i, path in enumerate(solution.path):
-                isValid = enterWord([mouseGrid[i] for i in path])
+                word = ''.join([solution.allStates[i][j] for j in path])
+                logger.info(f'entering {word}')
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 # TODO(mitch): detect when the thingo lagged out by testing for brown squares?
+                isValid = enterWord([mouseGrid[i] for i in path])
                 if not isValid:
-                    badWord = ''.join([solution.allStates[i][j] for j in path])
-                    s.addBadWord(badWord)
+                    s.addBadWord(word)
+                    logger.info(f'added {word} as a bad word')
                     break
 
                 # Wait for animations to finish
-                time.sleep(0.1)
+                time.sleep(0.5)
 
             # Else if no break, all words in solution were entered, exit out of entering solutions
             else:

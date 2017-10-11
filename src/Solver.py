@@ -75,7 +75,7 @@ class Solver:
         rootStates = self.getChildStates(initialState)
 
         # Split root states up evenly to distribute to processes
-        numWorkers = max(1, os.cpu_count() - 1)
+        numWorkers = max(1, os.cpu_count() // 2)
         splitStates = [rootStates[i::numWorkers] for i in range(numWorkers)]
 
         # Start workers
