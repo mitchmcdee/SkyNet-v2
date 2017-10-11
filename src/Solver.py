@@ -121,18 +121,23 @@ class Solver:
         childStates = []
         for root in state.getValidRoots(self.trie):
             for path in root.getValidPaths(self.trie, state):
+                childWord = state.getWord(path)
+
+                # If the child word already exists, skip over the state
+                if childWord in state.words:
+                    continue
+
                 childState = state.getRemovedPathState(path)
-                childWord = state.getWord(path) 
 
                 # If there are no more words, we've found a complete solution
                 if len(childState.wordLengths) == 0:
                     self.solutionQueue.put(childState)
-                    continue    
+                    continue
 
                 # If we haven't seen the removed word before, test it
                 if childWord not in self.seenWords and len(childState.state) > Solver.SEEN_THRESHOLD:
                     self.testQueue.put(childState)
-                    self.seenWords[childWord] = 1    
+                    self.seenWords[childWord] = 1
 
                 logger.info(f'{childState.words}')
                 childStates.append(childState)

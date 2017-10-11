@@ -128,4 +128,4 @@ class StateNode:
 
     # Return all the valid paths (i.e. paths that make a word of the required length)
     def getValidPaths(self, trie, state):
-        return filter(lambda x: len(x) in state.wordLengths and trie.isWord(state.getWord(x)), self.getPaths())
+        return filter(lambda path: len(path) in state.wordLengths and trie.isWord(state.getWord(path)), self.getPaths())

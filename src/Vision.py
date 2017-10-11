@@ -50,9 +50,9 @@ class Vision:
     # Takes a screenshot of the board region
     def getBoardImage(self):
         left = self.left
-        top = self.top + int(0.18 * self.height)
+        top = self.top + int(0.2 * self.height)
         width = self.width
-        height = int(0.75 * self.height) - int(0.18 * self.height)
+        height = int(0.7 * self.height) - int(0.2 * self.height)
 
         if self.isRetina:
             left /= 2

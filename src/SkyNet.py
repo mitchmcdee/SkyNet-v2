@@ -28,7 +28,7 @@ def enterWord(word, speed=0.08):
     start = vision.getBoardRatio()
 
     # Move over each letter
-    pyautogui.mouseDown(pause=speed)
+    pyautogui.mouseDown(pause=speed * 1.5)
     for letter in word:
         pyautogui.moveTo(letter[0], letter[1], pause=speed * 0.25)
         pyautogui.mouseDown(pause=speed * 0.75)
@@ -38,7 +38,7 @@ def enterWord(word, speed=0.08):
     pyautogui.moveTo(0, SCREEN_COORDS[1], pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
-    time.sleep(0.5)
+    time.sleep(0.55)
 
     # Return true if entered word was valid (board states were different), else false
     return abs(start - vision.getBoardRatio()) > (start // 200)
@@ -145,7 +145,7 @@ while True:
                     break
 
                 # Wait for animations to finish
-                time.sleep(0.5)
+                time.sleep(0.4)
 
             # Else if no break, all words in solution were entered, exit out of entering solutions
             else:
