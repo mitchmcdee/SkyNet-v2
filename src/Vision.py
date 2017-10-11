@@ -73,7 +73,7 @@ class Vision:
         h, w = grayImage.shape
 
         # Return total whiteness of the screen
-        ratio = sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 16) for y in range(0, h, h // 16)])
+        ratio = sum([1 if grayImage[y][x] >= 30 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
         return ratio
 
     # Scan first row in grid and return the number of boxes found

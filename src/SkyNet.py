@@ -23,28 +23,28 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 # TODO(mitch): rewrite this file as a class
 
 # Enters the given word onto the board
-def enterWord(word, speed=0):
+def enterWord(word, speed=0.08):
     # board ratio before entering word
     start = vision.getBoardRatio()
 
     # Move over each letter
-    pyautogui.mouseDown()
+    pyautogui.mouseDown(pause=speed)
     for letter in word:
-        pyautogui.moveTo(letter[0], letter[1], speed)
-        pyautogui.mouseDown()
+        pyautogui.moveTo(letter[0], letter[1], pause=speed * 0.25)
+        pyautogui.mouseDown(pause=speed * 0.75)
 
     # Release mouse and move to empty location
-    pyautogui.mouseUp()
-    pyautogui.moveTo(0, SCREEN_COORDS[1], speed)
+    pyautogui.mouseUp(pause=0)
+    pyautogui.moveTo(0, SCREEN_COORDS[1], pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
-    time.sleep(0.25)
+    time.sleep(0.3)
 
     # Return true if entered word was valid (board states were different), else false
-    return start != vision.getBoardRatio()
+    return abs(start - vision.getBoardRatio()) > (start // 100)
 
 # Click the button at the given relative width and height
-def clickButton(widthPercentage, heightPercentage):
+def clickButton(widthPercentage, heightPercentage, speed=0.05):
     w = widthPercentage * vision.width
     h = heightPercentage * vision.height
 
@@ -53,9 +53,9 @@ def clickButton(widthPercentage, heightPercentage):
         w /= 2
         h /= 2
 
-    pyautogui.moveTo(w, h)
-    pyautogui.mouseDown()
-    pyautogui.mouseUp()
+    pyautogui.moveTo(w, h, pause=speed * 0.5)
+    pyautogui.mouseDown(pause=speed)
+    pyautogui.mouseUp(pause=speed)
 
 # Resets the game board and exits any ads on screen
 def reset():
@@ -142,6 +142,9 @@ while True:
                     s.addBadWord(badWord)
                     break
 
+                # Wait for animations to finish
+                time.sleep(0.1)
+
             # Else if no break, all words in solution were entered, exit out of entering solutions
             else:
                 if len(solution.words) == len(wordLengths):
@@ -151,6 +154,6 @@ while True:
             if len(solution.path) > 0 and i == 0 and not isValid:
                 continue
 
-            # A problem occurred, reset!
+            # Reset board for next solution, wait for animations to finish
             reset()
-            time.sleep(0.5)
+            time.sleep(1)
