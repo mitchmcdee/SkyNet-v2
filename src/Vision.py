@@ -79,7 +79,7 @@ class Vision:
         # Get screenshot of cell
         cell = np.array(self.getImage(left, top, width, height))
         grayImage = cv2.cvtColor(cell, cv2.COLOR_BGRA2GRAY)
-        Image.fromarray(grayImage).save('../resources/debug/cell-' + str(time.time()) + '.png')
+        # Image.fromarray(grayImage).save('../resources/debug/cell-' + str(time.time()) + '.png')
 
         # Get height and width
         h, w = grayImage.shape

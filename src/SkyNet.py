@@ -22,30 +22,38 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 
 # TODO(mitch): rewrite this file as a class
 
+# Waits until all animations on board have stopped
+def waitForAnimation():
+    while True:
+        b = vision.getBoardRatio()
+        time.sleep(0.1)
+        if b == vision.getBoardRatio():
+            break
+
 # Enters the given word onto the board
-def enterWord(word, path, width, speed=0.08):
+def enterWord(word, path, width):
+    # Wait for animations to stop, necessary for computing board ratio
+    waitForAnimation()
+
     # board ratio before entering word
     start = vision.getBoardRatio()
 
     # Move over each letter
     for i, letter in enumerate(word):
         b = vision.getCellRatio(path[i], width)
-        while abs(b - vision.getCellRatio(path[i], width)) < (b // 10):
+        while b == vision.getCellRatio(path[i], width):
             pyautogui.moveTo(*letter, pause=0)
             pyautogui.mouseDown(pause=0)
+    pyautogui.mouseUp(pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
-    b = vision.getCellRatio(path[0], width)
-    pyautogui.mouseUp(pause=0)
-    while abs(b - vision.getCellRatio(path[0], width)) < (b // 10):
-        pass
-    time.sleep(0.3)
+    waitForAnimation()
 
     # Return true if entered word was valid (board states were different), else false
-    return abs(start - vision.getBoardRatio()) > (start // 100)
+    return start != vision.getBoardRatio()
 
 # Click the button at the given relative width and height
-def clickButton(widthPercentage, heightPercentage, speed=0.05):
+def clickButton(widthPercentage, heightPercentage):
     w = widthPercentage * vision.width
     h = heightPercentage * vision.height
 
@@ -54,15 +62,20 @@ def clickButton(widthPercentage, heightPercentage, speed=0.05):
         w /= 2
         h /= 2
 
-    pyautogui.moveTo(w, h, pause=speed * 0.5)
-    pyautogui.mouseDown(pause=speed)
-    pyautogui.mouseUp(pause=speed)
+    pyautogui.moveTo(w, h, pause=0)
+    pyautogui.mouseDown(pause=0)
+    pyautogui.mouseUp(pause=0)
 
 # Resets the game board and exits any ads on screen
 def reset():
-    clickButton(*vision.AD_BUTTON)
-    clickButton(*vision.RESET_BUTTON)
-    clickButton(0, SCREEN_COORDS[1] / vision.height)
+    while True:
+        b = vision.getBoardRatio()
+        clickButton(*vision.AD_BUTTON)
+        clickButton(*vision.RESET_BUTTON)
+        clickButton(SCREEN_COORDS[0] / vision.width, SCREEN_COORDS[1] / vision.height)
+        time.sleep(0.1)
+        if b != vision.getBoardRatio():
+            break
 
 # Generates a mouse grid for clicking board tiles
 def generateMouseGrid(width):
@@ -88,25 +101,15 @@ vision = Vision(SCREEN_COORDS, IS_RETINA)
 screen = Screen()
 
 # Wait for screen to become responsive (anrdoid emulator? osx? idek lol)
-before = None
-after = None
-while before == after:
-    before = vision.getBoardRatio()
-    reset()
-    after = vision.getBoardRatio()
+reset()
 
 # Play the game!
 while True:
-    # Wait for any lingering animations
-    time.sleep(0.5)
-
-    # Ensure screen contains a board
-    # TODO(mitch): something better than this please
-    if vision.getBoardRatio() < 25:
-        continue
-
     # Clear screen
     screen.clear()
+
+    # Wait for any lingering animations
+    waitForAnimation()
 
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
@@ -145,9 +148,6 @@ while True:
                     logger.info(f'added {word} as a bad word')
                     break
 
-                # Wait for animations to finish
-                time.sleep(0.4)
-
             # Else if no break, all words in solution were entered, exit out of entering solutions
             else:
                 if len(solution.words) == len(wordLengths):
@@ -155,9 +155,7 @@ while True:
 
             # If we only entered one word incorrectly, we don't need to clear screen
             if len(solution.path) > 0 and i == 0 and not isValid:
-                time.sleep(0.2)
                 continue
 
-            # Reset board for next solution, wait for animations to finish
+            # Reset board for next solution
             reset()
-            time.sleep(1)
