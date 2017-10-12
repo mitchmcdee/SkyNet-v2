@@ -6,7 +6,7 @@ from math import ceil
 from Trie import Trie
 from State import State
 from collections import Counter
-from multiprocessing import Process, Queue, Lock, Manager
+from multiprocessing import Process, Queue, Lock, Manager, current_process
 
 logger = logging.getLogger(__name__)
 handler = logging.FileHandler('workers.log')
@@ -83,17 +83,26 @@ class Solver:
             p = Process(target=self.solvingWorker, args=(splitStates[i],))
             p.daemon = True
             p.start()
+            self.workers.append(p)
 
         # Yield found solutions
+        activeWorkers = numWorkers
         while True:
             # Check for complete solutions
             try:
                 solution = self.solutionQueue.get_nowait()
             except:
-                pass
+                # No more solutions and no more workers!
+                if activeWorkers == 0:
+                    break
             else:
-                if solution is not None and all(w not in self.badWords for w in solution.words):
-                    yield solution
+                if solution is not None:
+                    if type(solution) == str:
+                        activeWorkers -= 1
+                        logger.info(f'{solution} has finished! {activeWorkers} workers left')
+
+                    elif all(w not in self.badWords for w in solution.words):
+                        yield solution
 
             # Check for test solutions
             try:
@@ -106,6 +115,9 @@ class Solver:
 
     # Worker which solves states and sends solutions to main process
     def solvingWorker(self, stack):
+        workerName = current_process().name
+        logger.info(f'{workerName} is starting!')
+
         while len(stack) != 0:
             state = stack.pop()
 
@@ -115,6 +127,9 @@ class Solver:
 
             # Calculate child states
             stack.extend(self.getChildStates(state))
+
+        # Send death message
+        self.solutionQueue.put(workerName)
 
     # Generates all child solutions of a root state
     def getChildStates(self, state):
