@@ -72,7 +72,7 @@ class Solver:
 
         # Generate all root states
         initialState = State(state, wordLengths)
-        rootStates = self.getChildStates(initialState)
+        rootStates = self.getChildStates('pre:', initialState)
 
         # Split root states up evenly to distribute to processes
         numWorkers = max(1, os.cpu_count() // 2)
@@ -126,13 +126,13 @@ class Solver:
                 continue
 
             # Calculate child states
-            stack.extend(self.getChildStates(state))
+            stack.extend(self.getChildStates(i, state))
 
         # Send death message
         self.solutionQueue.put(i)
 
     # Generates all child solutions of a root state
-    def getChildStates(self, state):
+    def getChildStates(self, i, state):
         childStates = []
         for root in state.getValidRoots(self.trie):
             for path in root.getValidPaths(self.trie, state):
@@ -154,6 +154,6 @@ class Solver:
                     self.testQueue.put(childState)
                     self.seenWords[childWord] = 1
 
-                logger.info(f'{childState.words}')
+                logger.info(f'{i} {childState.words}')
                 childStates.append(childState)
         return childStates
