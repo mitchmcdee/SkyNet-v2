@@ -1,6 +1,7 @@
 import numpy as np
 from mss import mss
 import time
+import os
 import cv2
 import pytesseract
 from multiprocessing import Pool
@@ -122,7 +123,8 @@ class Vision:
                 # Image.fromarray(charImage).save('../resources/debug/char-' + str(time.time()) + '.png')
                 charImages.append(Image.fromarray(charImage))
 
-        return Pool().map(getCharFromImage, charImages)
+        numWorkers = max(1, os.cpu_count() // 2)
+        return Pool(numWorkers).map(getCharFromImage, charImages)
 
     def getWord(self, image, startX, startY):
         # Find starting X and letterbox sideLength

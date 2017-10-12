@@ -79,6 +79,9 @@ class Screen:
         with open('solutions.log', 'w'), open('workers.log', 'w'):
             pass
 
+        self.solutionWindow.clear()
+        self.workerWindow.clear()
+
     # Author: glenbot
     # Source: https://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     def tail(self, f, lines=1, _buffer=4098):

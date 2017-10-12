@@ -98,8 +98,11 @@ class Solver:
             else:
                 if solution is not None:
                     if type(solution) == int:
+                        p = self.workers[solution]
+                        p.terminate() and p.join()
                         activeWorkers -= 1
                         logger.info(f'{activeWorkers} workers left!')
+                        continue
 
                     elif all(w not in self.badWords for w in solution.words):
                         yield solution

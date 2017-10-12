@@ -27,8 +27,10 @@ def enterWord(word, speed=0.08):
     # board ratio before entering word
     start = vision.getBoardRatio()
 
+    # TODO(mitch): have vision take photo of tile and only move once its changed colour!
+
     # Move over each letter
-    pyautogui.mouseDown(pause=speed * 1.5)
+    pyautogui.mouseDown(pause=speed * 2)
     for letter in word:
         pyautogui.moveTo(letter[0], letter[1], pause=speed * 0.25)
         pyautogui.mouseDown(pause=speed * 0.75)
