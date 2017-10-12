@@ -80,7 +80,7 @@ class Solver:
 
         # Start workers
         for i in range(numWorkers):
-            p = Process(target=self.solvingWorker, args=(splitStates[i],))
+            p = Process(target=self.solvingWorker, args=(i, splitStates[i]))
             p.daemon = True
             p.start()
             self.workers.append(p)
@@ -97,9 +97,9 @@ class Solver:
                     break
             else:
                 if solution is not None:
-                    if type(solution) == str:
+                    if type(solution) == int:
                         activeWorkers -= 1
-                        logger.info(f'{solution} has finished! {activeWorkers} workers left')
+                        logger.info(f'{activeWorkers} workers left!')
 
                     elif all(w not in self.badWords for w in solution.words):
                         yield solution
@@ -114,10 +114,7 @@ class Solver:
                     yield test
 
     # Worker which solves states and sends solutions to main process
-    def solvingWorker(self, stack):
-        workerName = current_process().name
-        logger.info(f'{workerName} is starting!')
-
+    def solvingWorker(self, i, stack):
         while len(stack) != 0:
             state = stack.pop()
 
@@ -129,7 +126,7 @@ class Solver:
             stack.extend(self.getChildStates(state))
 
         # Send death message
-        self.solutionQueue.put(workerName)
+        self.solutionQueue.put(i)
 
     # Generates all child solutions of a root state
     def getChildStates(self, state):
