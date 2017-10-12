@@ -33,28 +33,8 @@ class Vision:
         self.width = screenCoords[2] - screenCoords[0]
         self.capture = mss()
 
-    # Takes a screenshot of the screen region
-    def getScreenImage(self):
-        left = self.left
-        top = self.top
-        width = self.width
-        height = self.height
-
-        if self.isRetina:
-            left /= 2
-            top /= 2
-            width /= 2
-            height /= 2
-
-        return self.capture.grab({'left': left, 'top': top, 'width': width, 'height': height})
-
-    # Takes a screenshot of the board region
-    def getBoardImage(self):
-        left = self.left
-        top = self.top + int(0.2 * self.height)
-        width = self.width
-        height = int(0.7 * self.height) - int(0.2 * self.height)
-
+    # Takes a screenshot of the specified region
+    def getImage(self, left, top, width, height):
         if self.isRetina:
             left /= 2
             top /= 2
@@ -65,8 +45,14 @@ class Vision:
 
     # Gets board ratio of whiteness
     def getBoardRatio(self):
+        # Compute board coordinates
+        left = self.left
+        top = self.top + int(0.2 * self.height)
+        width = self.width
+        height = int(0.7 * self.height) - int(0.2 * self.height)
+
         # Get screenshot of game board
-        board = np.array(self.getBoardImage())
+        board = np.array(self.getImage(left, top, width, height))
         grayImage = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
         Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
 
@@ -75,6 +61,31 @@ class Vision:
 
         # Return total whiteness of the screen
         ratio = sum([1 if grayImage[y][x] >= 100 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
+        return ratio
+
+    # Gets cell ratio of whiteness
+    def getCellRatio(self, i, numBoxes):
+        # Compute cell coordinates
+        x = i % numBoxes
+        y = i // numBoxes
+        grid = Vision.GRID_CENTRES[numBoxes - 2]
+        topLeft = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
+        halfWidth = int(grid[3] * self.width)
+        left = int((topLeft[0] + x * grid[1]) * self.width)
+        top = int((topLeft[1] + y * grid[2]) * self.height) + halfWidth
+        width = halfWidth * 2
+        height = width
+
+        # Get screenshot of cell
+        cell = np.array(self.getImage(left, top, width, height))
+        grayImage = cv2.cvtColor(cell, cv2.COLOR_BGRA2GRAY)
+        Image.fromarray(grayImage).save('../resources/debug/cell-' + str(time.time()) + '.png')
+
+        # Get height and width
+        h, w = grayImage.shape
+
+        # Return total whiteness of the screen
+        ratio = sum([1 if grayImage[y][x] >= 200 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
         return ratio
 
     # Scan first row in grid and return the number of boxes found
@@ -107,7 +118,7 @@ class Vision:
 
         # Get grid centres and calculate their char widths
         grid = Vision.GRID_CENTRES[numBoxes - 2]
-        width = (int(grid[3] * 2 * self.width), int(grid[4] * 2 * self.height))
+        width = int(grid[3] * 2 * self.width)
 
         # Loop over each box in the grid and get its charImage
         charImages = []
@@ -119,7 +130,7 @@ class Vision:
                 topLeft[1] = int((topLeft[1] + j * grid[2]) * self.height)
 
                 # Get image of char
-                charImage = image[topLeft[1]:topLeft[1] + width[1], topLeft[0]:topLeft[0] + width[0]]
+                charImage = image[topLeft[1]:topLeft[1] + width, topLeft[0]:topLeft[0] + width]
                 # Image.fromarray(charImage).save('../resources/debug/char-' + str(time.time()) + '.png')
                 charImages.append(Image.fromarray(charImage))
 
@@ -219,7 +230,7 @@ class Vision:
     # Get board state from the current screen
     def getBoardState(self):
         # Get screenshot of game state
-        screen = self.getScreenImage()
+        screen = self.getImage(self.left, self.top, self.width, self.height)
         image = cv2.cvtColor(np.array(screen), cv2.COLOR_BGRA2RGB)
         # Image.fromarray(image).save('../resources/debug/screen-' + str(time.time()) + '.png')
 

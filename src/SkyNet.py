@@ -23,27 +23,26 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 # TODO(mitch): rewrite this file as a class
 
 # Enters the given word onto the board
-def enterWord(word, speed=0.08):
+def enterWord(word, path, width, speed=0.08):
     # board ratio before entering word
     start = vision.getBoardRatio()
 
-    # TODO(mitch): have vision take photo of tile and only move once its changed colour!
-
     # Move over each letter
-    pyautogui.mouseDown(pause=speed * 2)
-    for letter in word:
-        pyautogui.moveTo(letter[0], letter[1], pause=speed * 0.25)
-        pyautogui.mouseDown(pause=speed * 0.75)
-
-    # Release mouse and move to empty location
-    pyautogui.mouseUp(pause=0)
-    pyautogui.moveTo(0, SCREEN_COORDS[1], pause=0)
+    for i, letter in enumerate(word):
+        b = vision.getCellRatio(path[i], width)
+        while abs(b - vision.getCellRatio(path[i], width)) < (b // 10):
+            pyautogui.moveTo(*letter, pause=0)
+            pyautogui.mouseDown(pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
-    time.sleep(0.55)
+    b = vision.getCellRatio(path[0], width)
+    pyautogui.mouseUp(pause=0)
+    while abs(b - vision.getCellRatio(path[0], width)) < (b // 10):
+        pass
+    time.sleep(0.3)
 
     # Return true if entered word was valid (board states were different), else false
-    return abs(start - vision.getBoardRatio()) > (start // 200)
+    return abs(start - vision.getBoardRatio()) > (start // 100)
 
 # Click the button at the given relative width and height
 def clickButton(widthPercentage, heightPercentage, speed=0.05):
@@ -140,7 +139,7 @@ while True:
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 # TODO(mitch): detect when the thingo lagged out by testing for brown squares?
-                isValid = enterWord([mouseGrid[i] for i in path])
+                isValid = enterWord([mouseGrid[i] for i in path], path, width)
                 if not isValid:
                     s.addBadWord(word)
                     logger.info(f'added {word} as a bad word')
@@ -156,6 +155,7 @@ while True:
 
             # If we only entered one word incorrectly, we don't need to clear screen
             if len(solution.path) > 0 and i == 0 and not isValid:
+                time.sleep(0.2)
                 continue
 
             # Reset board for next solution, wait for animations to finish
