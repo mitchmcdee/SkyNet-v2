@@ -120,7 +120,6 @@ class Solver:
                 if testWord not in self.testedWords and all(w not in self.badWords for w in testState.words):
                     yield testState
                 if testWord in self.seenWords:
-                    logger.info(f'{testWord} {testState.path}')
                     del self.seenWords[testWord]
 
     # Worker which solves states and sends solutions to main process

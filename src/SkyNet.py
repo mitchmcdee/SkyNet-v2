@@ -64,9 +64,9 @@ def clickButton(widthPercentage, heightPercentage):
         w /= 2
         h /= 2
 
-    pyautogui.moveTo(w, h, pause=0.1)
-    pyautogui.mouseDown(pause=0.1)
-    pyautogui.mouseUp(pause=0.1)
+    pyautogui.moveTo(w, h, pause=0.05)
+    pyautogui.mouseDown(pause=0.05)
+    pyautogui.mouseUp(pause=0.05)
 
 # Resets the game board and exits any ads on screen
 def reset():
@@ -75,7 +75,7 @@ def reset():
         clickButton(*vision.AD_BUTTON)
         clickButton(*vision.RESET_BUTTON)
         clickButton(SCREEN_COORDS[0] / vision.width, SCREEN_COORDS[1] / vision.height)
-        time.sleep(0.1)
+        time.sleep(0.2)
         if b != vision.getBoardRatio():
             waitForAnimation()
             break

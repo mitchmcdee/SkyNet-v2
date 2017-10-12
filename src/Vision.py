@@ -243,6 +243,8 @@ class Vision:
 
         # Get a list of chars from the board state
         chars = self.getCharsFromImage(grayImage)
+        if chars == []:
+            return [], []
 
         # Get a list of word lengths
         words = self.getWordLengthsFromImage(image, chars)
