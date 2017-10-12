@@ -200,14 +200,18 @@ class Vision:
         return wordLength, x, int(y + sideLength * (3 / 2))
 
     # Get a list of word lengths from the image
-    def getWordLengthsFromImage(self, image):
-        top = int(0.75 * self.height)
+    def getWordLengthsFromImage(self, image, chars):
+        top = int(0.74 * self.height)
         bottom = int(0.90 * self.height)
         croppedImage = image[top:bottom, :]
 
         startX = 0  # Should be a valid x position for start of row
-        startY = int(0.2 * croppedImage.shape[0])  # Should be a valid y position for start of row
-        heightJump = int(0.2 * croppedImage.shape[0])  # Should be a valid y jump
+        startY = 0  # Should be a valid y position for start of row
+        heightJump = int(0.15 * croppedImage.shape[0])  # Should be a valid y jump
+
+        # First level has "Words to find" text in the way, this catches it
+        if len(chars) == 4:
+            startY = int(0.25 * croppedImage.shape[0])
 
         words = []
         while startY < croppedImage.shape[0]:
@@ -242,7 +246,7 @@ class Vision:
         chars = self.getCharsFromImage(grayImage)
 
         # Get a list of word lengths
-        words = self.getWordLengthsFromImage(image)
+        words = self.getWordLengthsFromImage(image, chars)
 
         # Return state
         return chars, words
