@@ -26,7 +26,7 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 def waitForAnimation():
     while True:
         b = vision.getBoardRatio()
-        time.sleep(0.1)
+        time.sleep(0.2)
         if b == vision.getBoardRatio():
             break
 
@@ -62,9 +62,9 @@ def clickButton(widthPercentage, heightPercentage):
         w /= 2
         h /= 2
 
-    pyautogui.moveTo(w, h, pause=0)
-    pyautogui.mouseDown(pause=0)
-    pyautogui.mouseUp(pause=0)
+    pyautogui.moveTo(w, h, pause=0.05)
+    pyautogui.mouseDown(pause=0.05)
+    pyautogui.mouseUp(pause=0.05)
 
 # Resets the game board and exits any ads on screen
 def reset():
@@ -75,6 +75,7 @@ def reset():
         clickButton(SCREEN_COORDS[0] / vision.width, SCREEN_COORDS[1] / vision.height)
         time.sleep(0.1)
         if b != vision.getBoardRatio():
+            waitForAnimation()
             break
 
 # Generates a mouse grid for clicking board tiles
