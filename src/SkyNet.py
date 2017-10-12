@@ -26,7 +26,7 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 def waitForAnimation():
     while True:
         b = vision.getBoardRatio()
-        time.sleep(0.25)
+        time.sleep(0.3)
         if b == vision.getBoardRatio():
             break
 
@@ -41,9 +41,11 @@ def enterWord(word, path, width):
     # Move over each letter
     for i, letter in enumerate(word):
         b = vision.getCellRatio(path[i], width)
-        while b == vision.getCellRatio(path[i], width):
+        a = b
+        while a == b:
             pyautogui.moveTo(*letter, pause=0)
             pyautogui.mouseDown(pause=0)
+            a = vision.getCellRatio(path[i], width)
     pyautogui.mouseUp(pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
@@ -140,6 +142,7 @@ while True:
             for i, path in enumerate(solution.path):
                 word = ''.join([solution.allStates[i][j] for j in path])
                 logger.info(f'entering {word}')
+                s.addTestedWord(word)
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
                 # TODO(mitch): detect when the thingo lagged out by testing for brown squares?

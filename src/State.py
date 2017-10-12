@@ -60,7 +60,7 @@ class State():
                     childPath = current.path[:] + [self.state[c]]
 
                     # Check path is a valid path (i.e. can make a word)
-                    if trie.isPath(childPath) is not True:
+                    if not trie.isPath(childPath):
                         continue
 
                     childParents = current.parents.copy()
@@ -128,4 +128,4 @@ class StateNode:
 
     # Return all the valid paths (i.e. paths that make a word of the required length)
     def getValidPaths(self, trie, state):
-        return filter(lambda path: len(path) in state.wordLengths and trie.isWord(state.getWord(path)), self.getPaths())
+        return filter(lambda p: len(p) in state.wordLengths and trie.isWord(state.getWord(p)), self.getPaths())

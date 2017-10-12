@@ -21,7 +21,7 @@ class Vision:
                     ((0.115, 0.234), 0.192, 0.1125, 0.045, 0.025),  # 5x5
                     ((0.093, 0.221), 0.160, 0.0941, 0.040, 0.024),  # 6x6
                     ((0.089, 0.215), 0.138, 0.0820, 0.035, 0.021),  # 7x7
-                    ((0.082, 0.209), 0.122, 0.0723, 0.034, 0.020))  # 8x8
+                    ((0.082, 0.209), 0.122, 0.0710, 0.034, 0.020))  # 8x8
     RESET_BUTTON = (0.306, 0.950)   # Location of reset button
     AD_BUTTON = (0.960, 0.078)      # Location of close ad button
 
@@ -134,8 +134,7 @@ class Vision:
                 # Image.fromarray(charImage).save('../resources/debug/char-' + str(time.time()) + '.png')
                 charImages.append(Image.fromarray(charImage))
 
-        numWorkers = max(1, os.cpu_count() // 2)
-        return Pool(numWorkers).map(getCharFromImage, charImages)
+        return Pool().map(getCharFromImage, charImages)
 
     def getWord(self, image, startX, startY):
         # Find starting X and letterbox sideLength
