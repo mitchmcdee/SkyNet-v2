@@ -20,14 +20,15 @@ class Solver:
     SEEN_THRESHOLD = 25 # Minimum state size that will yield any new words seen
 
     def __init__(self):
-        m = Manager()              # TODO(mitch): profile this and see if its performant?
-        self.badWords  = m.dict()  # Set of words not to search
-        self.seenWords = m.dict()  # Set of words already seen
-        self.testedWords = m.dict()  # Set of words already tested
-        self.workers   = []        # List of workers
+        m = Manager()               # TODO(mitch): profile this and see if its performant?
+        self.badWords    = m.dict() # Set of words not to search
+        self.seenWords   = m.dict() # Set of words already seen
+        self.testedWords = m.dict() # Set of words already tested
+        self.workers   = []         # List of workers
 
         self.solutionQueue = Queue()
         self.testQueue     = Queue()
+        self.deathQueue    = Queue()
 
     # Return self on enter
     def __enter__(self):
@@ -80,7 +81,7 @@ class Solver:
         rootStates = self.getChildStates('pre:', initialState)
 
         # Split root states up evenly to distribute to processes
-        numWorkers = max(1, os.cpu_count() // 2)
+        numWorkers = os.cpu_count() - 1
         splitStates = [rootStates[i::numWorkers] for i in range(numWorkers)]
 
         # Start workers
@@ -93,23 +94,27 @@ class Solver:
         # Yield found solutions
         activeWorkers = numWorkers
         while True:
+            # Check for dead workers
+            try:
+                workerId = self.deathQueue.get_nowait()
+            except:
+                pass
+            else:
+                p = self.workers[int(workerId)]
+                p.terminate() and p.join()
+                activeWorkers -= 1
+                logger.info(f'{activeWorkers} workers left!')
+
             # Check for complete solutions
             try:
-                solution = self.solutionQueue.get_nowait()
+                solutionState = self.solutionQueue.get_nowait()
             except:
-                # No more solutions and no more workers!
+                # If no more solutions and no more workers, exit
                 if activeWorkers == 0:
                     break
             else:
-                if type(solution) == int:
-                    p = self.workers[solution]
-                    p.terminate() and p.join()
-                    activeWorkers -= 1
-                    logger.info(f'{activeWorkers} workers left!')
-                    continue
-
-                elif set(solution.words).isdisjoint(self.badWords.keys()):
-                    yield solution
+                if set(solutionState.words).isdisjoint(self.badWords.keys()):
+                    yield solutionState
 
             # Check for test solutions
             try:
@@ -135,7 +140,7 @@ class Solver:
             stack.extend(self.getChildStates(i, state))
 
         # Send death message
-        self.solutionQueue.put(i)
+        self.deathQueue.put(i)
 
     # Generates all child solutions of a root state
     def getChildStates(self, i, state):
@@ -151,10 +156,6 @@ class Solver:
                 # If the child state already exists, skip over the state
                 childState = state.getRemovedPathState(path)
                 if tuple(childState.state) in uniqueStates:
-                    continue
-
-                # Check state doesn't contain any bad words
-                if not set(childState.words).isdisjoint(self.badWords.keys()):
                     continue
 
                 # If there are no more words, we've found a complete solution

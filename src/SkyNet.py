@@ -2,6 +2,7 @@
 import pyautogui
 import sys
 import time
+import numpy as np
 from math import sqrt
 from PIL import Image
 from Solver import Solver
@@ -25,9 +26,9 @@ SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
 # Waits until all animations on board have stopped
 def waitForAnimation():
     while True:
-        b = vision.getBoardRatio()
-        time.sleep(0.3)
-        if b == vision.getBoardRatio():
+        b = vision.getBoard()
+        time.sleep(0.1)
+        if np.array_equal(b, vision.getBoard()):
             break
 
 # Enters the given word onto the board
@@ -40,12 +41,12 @@ def enterWord(word, path, width):
 
     # Move over each letter
     for i, letter in enumerate(word):
-        b = vision.getCellRatio(path[i], width)
+        b = vision.getCell(path[i], width)
         a = b
-        while a == b:
+        while np.array_equal(a, b):
             pyautogui.moveTo(*letter, pause=0)
             pyautogui.mouseDown(pause=0)
-            a = vision.getCellRatio(path[i], width)
+            a = vision.getCell(path[i], width)
     pyautogui.mouseUp(pause=0)
 
     # Wait for animations to stop, necessary for computing board ratio
@@ -114,6 +115,9 @@ while True:
     # Wait for any lingering animations
     waitForAnimation()
 
+    # state = ['n', 'a', 'r', 'i', 'e', 't', 's', 'e', 'u', 'd', 't', 'r', 't', 'a', 'l', 't', 'e', 'a', 't', 'h', 'a', 'h', 'c', 'v', 'i', 'l', 'b', 'o', 'l', 'e', 'm', 's', 'g', 'f', 'p', 'l']
+    # wordLengths = [7, 6, 7, 4, 4, 3, 5]
+
     # Get level state and word lengths required
     state, wordLengths = vision.getBoardState()
     width = int(sqrt(len(state)))
@@ -145,7 +149,6 @@ while True:
                 s.addTestedWord(word)
 
                 # If the same ratio, the word entered was a bad one, so remove it from all solutions
-                # TODO(mitch): detect when the thingo lagged out by testing for brown squares?
                 isValid = enterWord([mouseGrid[i] for i in path], path, width)
                 if not isValid:
                     s.addBadWord(word)

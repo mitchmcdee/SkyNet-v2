@@ -43,8 +43,8 @@ class Vision:
 
         return self.capture.grab({'left': left, 'top': top, 'width': width, 'height': height})
 
-    # Gets board ratio of whiteness
-    def getBoardRatio(self):
+    # Gets board image array
+    def getBoard(self):
         # Compute board coordinates
         left = self.left
         top = self.top + int(0.2 * self.height)
@@ -56,6 +56,12 @@ class Vision:
         grayImage = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
         # Image.fromarray(grayImage).save('../resources/debug/board-' + str(time.time()) + '.png')
 
+        return grayImage
+
+    # Gets board ratio of whiteness
+    def getBoardRatio(self):
+        grayImage = self.getBoard()
+
         # Get height and width
         h, w = grayImage.shape
 
@@ -63,8 +69,8 @@ class Vision:
         ratio = sum([1 if grayImage[y][x] >= 100 else 0 for x in range(0, w, w // 32) for y in range(0, h, h // 32)])
         return ratio
 
-    # Gets cell ratio of whiteness
-    def getCellRatio(self, i, numBoxes):
+    # Gets cell image array
+    def getCell(self, i, numBoxes):
         # Compute cell coordinates
         x = i % numBoxes
         y = i // numBoxes
@@ -80,6 +86,12 @@ class Vision:
         cell = np.array(self.getImage(left, top, width, height))
         grayImage = cv2.cvtColor(cell, cv2.COLOR_BGRA2GRAY)
         # Image.fromarray(grayImage).save('../resources/debug/cell-' + str(time.time()) + '.png')
+
+        return grayImage
+
+    # Gets cell ratio of whiteness
+    def getCellRatio(self, i, numBoxes):
+        grayImage = self.getCell(i, numBoxes)
 
         # Get height and width
         h, w = grayImage.shape
