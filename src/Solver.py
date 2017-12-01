@@ -164,7 +164,7 @@ class Solver:
 
                 childStates.append(childState)
                 uniqueStates.add(tuple(childState.state))
-                # logger.info(f'{i}: {childState.words}')
+                logger.info(f'{i}: {childState.words}')
 
                 # If we're solving a small state, don't bother testing solutions
                 if len(childState.state) <= Solver.SEEN_THRESHOLD:
