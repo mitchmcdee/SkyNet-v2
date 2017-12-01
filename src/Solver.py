@@ -108,7 +108,7 @@ class Solver:
                     logger.info(f'{activeWorkers} workers left!')
                     continue
 
-                elif all(w not in self.badWords for w in solution.words):
+                elif set(solution.words).isdisjoint(self.badWords.keys()):
                     yield solution
 
             # Check for test solutions
@@ -117,7 +117,7 @@ class Solver:
             except:
                 pass
             else:
-                if testWord not in self.testedWords and all(w not in self.badWords for w in testState.words):
+                if testWord not in self.testedWords and set(testState.words).isdisjoint(self.badWords.keys()):
                     yield testState
                 if testWord in self.seenWords:
                     del self.seenWords[testWord]
@@ -128,7 +128,7 @@ class Solver:
             state = stack.pop()
 
             # Check state doesn't contain any bad words
-            if any(w in self.badWords for w in state.words):
+            if not set(state.words).isdisjoint(self.badWords.keys()):
                 continue
 
             # Calculate child states
@@ -154,7 +154,7 @@ class Solver:
                     continue
 
                 # Check state doesn't contain any bad words
-                if any(w in self.badWords for w in childState.words):
+                if not set(childState.words).isdisjoint(self.badWords.keys()):
                     continue
 
                 # If there are no more words, we've found a complete solution
