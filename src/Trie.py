@@ -2,32 +2,26 @@
 class Trie():
     def __init__(self):
         self.root = TrieNode('_')
+        self.words = set()
 
     # Add a word to the Trie
     def addWord(self, word):
+        if word in self.words:
+            return
+
         head = self.root
         for char in word:
             if char not in head.children:
                 head.addChild(TrieNode(char))
             head = head.children[char]
 
-        # Return 0 if word already exists, else 1
-        if '*' in head.children:
-            return 0
-
+        self.words.add(word)
         # Symbolise end of a word
         head.children['*'] = None
-        return 1
 
     # Check whether given word is in the Trie
     def isWord(self, word):
-        head = self.root
-        for char in word:
-            if char not in head.children:
-                return False
-            head = head.children[char]
-
-        return True if '*' in head.children else False
+        return word in self.words
 
     # Check whether given path is in the Trie
     def isPath(self, path):
@@ -36,7 +30,6 @@ class Trie():
             if char not in head.children:
                 return False
             head = head.children[char]
-
         return True
 
 

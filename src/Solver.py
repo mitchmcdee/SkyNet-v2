@@ -49,7 +49,6 @@ class Solver:
 
     # Generates a trie tailored to the given state and word lengths and broadcasts it
     def initialiseTrie(self, state, wordLengths):
-        numWords = 0
         trie = Trie()
         with open('../resources/goodWords.txt', 'r') as f:
             for line in f:
@@ -67,7 +66,9 @@ class Solver:
                 if any(v < 0 for v in stateCounter.values()):
                     continue
 
-                numWords += trie.addWord(word)
+                trie.addWord(word)
+
+        numWords = len(trie.words)
         logger.info(f'Added {numWords} words to trie')
         return trie
 
