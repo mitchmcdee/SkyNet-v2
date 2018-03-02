@@ -147,36 +147,35 @@ class Solver:
     def getChildStates(self, i, state):
         childStates = []
         uniqueStates = set()
-        for root in state.getValidRoots(self.trie):
-            for path in root.getValidPaths(self.trie, state):
-                # If the child word already exists, skip over the state
-                childWord = state.getWord(path)
-                if childWord in state.words:
-                    continue
+        for path in state.getValidPaths(self.trie):
+            # If the child word already exists, skip over the state
+            childWord = state.getWord(path)
+            if childWord in state.words:
+                continue
 
-                # If the child state already exists, skip over the state
-                childState = state.getRemovedPathState(path)
-                if tuple(childState.state) in uniqueStates:
-                    continue
+            # If the child state already exists, skip over the state
+            childState = state.getRemovedPathState(path)
+            if tuple(childState.state) in uniqueStates:
+                continue
 
-                # If there are no more words, we've found a complete solution
-                if len(childState.wordLengths) == 0:
-                    self.solutionQueue.put(childState)
-                    continue
+            # If there are no more words, we've found a complete solution
+            if len(childState.wordLengths) == 0:
+                self.solutionQueue.put(childState)
+                continue
 
-                childStates.append(childState)
-                uniqueStates.add(tuple(childState.state))
-                logger.info(f'{i}: {childState.words}')
+            childStates.append(childState)
+            uniqueStates.add(tuple(childState.state))
+            logger.info(f'{i}: {childState.words}')
 
-                # If we're solving a small state, don't bother testing solutions
-                if len(childState.state) <= Solver.SEEN_THRESHOLD:
-                    continue
+            # If we're solving a small state, don't bother testing solutions
+            if len(childState.state) <= Solver.SEEN_THRESHOLD:
+                continue
 
-                # If we haven't seen a word before, test it
-                for word in childState.words:
-                    if word not in self.seenWords and word not in self.testedWords:
-                        self.seenWords[word] = 1
-                        self.testQueue.put((word, childState))
-                        # logger.info(f'{i}: {word} {childState.words}')
-                        break
+            # If we haven't seen a word before, test it
+            for word in childState.words:
+                if word not in self.seenWords and word not in self.testedWords:
+                    self.seenWords[word] = 1
+                    self.testQueue.put((word, childState))
+                    # logger.info(f'{i}: {word} {childState.words}')
+                    break
         return childStates
