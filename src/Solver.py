@@ -1,181 +1,184 @@
-import sys
 import os
 import logging
-import pickle
-from math import ceil
-from Trie import Trie
-from State import State
+import queue
 from collections import Counter
-from multiprocessing import Process, Queue, Lock, Manager, current_process
+from multiprocessing import Process, Queue, Manager
+from state import State
+from trie import Trie
 
-logger = logging.getLogger(__name__)
-handler = logging.FileHandler('workers.log')
-formatter = logging.Formatter('%(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+LOGGER = logging.getLogger(__name__)
+HANDLER = logging.FileHandler('workers.log')
+FORMATTER = logging.Formatter('%(message)s')
+HANDLER.setFormatter(FORMATTER)
+LOGGER.addHandler(HANDLER)
+LOGGER.setLevel(logging.INFO)
+
+
+# Generates a trie tailored to the given state and word lengths and broadcasts it
+def initialise_trie(state, word_lengths):
+    trie = Trie()
+    with open('../resources/goodWords.txt', 'r') as word_file:
+        for line in word_file:
+            word = line.strip('\n')
+
+            # Skip words that have lengths not of interest
+            if len(word) not in word_lengths:
+                continue
+
+            state_counter = Counter(state)
+            word_counter = Counter(word)
+            state_counter.subtract(word_counter)
+
+            # Skip words that cannot be made from the initial state of letters
+            if any(v < 0 for v in state_counter.values()):
+                continue
+
+            trie.add_word(word)
+
+    num_words = len(trie.words)
+    LOGGER.info(f'Added {num_words} words to trie')
+    return trie
 
 
 class Solver:
     SEEN_THRESHOLD = 25 # Minimum state size that will yield any new words seen
 
     def __init__(self):
-        m = Manager()               # TODO(mitch): profile this and see if its performant?
-        self.badWords    = m.dict() # Set of words not to search
-        self.seenWords   = m.dict() # Set of words already seen
-        self.testedWords = m.dict() # Set of words already tested
-        self.workers   = []         # List of workers
+        manager = Manager()                 # TODO(mitch): profile this and see if its performant?
+        self.bad_words = manager.dict()     # Set of words not to search
+        self.seen_words = manager.dict()    # Set of words already seen
+        self.tested_words = manager.dict()  # Set of words already tested
+        self.workers = []                   # List of workers
 
-        self.solutionQueue = Queue()
-        self.testQueue     = Queue()
-        self.deathQueue    = Queue()
+        self.solution_queue = Queue()
+        self.test_queue = Queue()
+        self.death_queue = Queue()
+
+        self.trie = None
 
     # Return self on enter
     def __enter__(self):
         return self
 
     # Clear queues and words on exit
-    def __exit__(self, t, v, traceback):
-        [w.terminate() for w in self.workers]
-        [w.join() for w in self.workers]
+    def __exit__(self, type_, val, trace_back):
+        for worker in self.workers:
+            worker.terminate()
+            worker.join()
 
     # Add a bad word to avoid it being searched again
-    def addBadWord(self, word):
-        self.badWords[word] = 1
+    def add_bad_word(self, word):
+        self.bad_words[word] = 1
 
     # Add a seen word to avoid it being tested again
-    def addTestedWord(self, word):
-        self.testedWords[word] = 1
-
-    # Generates a trie tailored to the given state and word lengths and broadcasts it
-    def initialiseTrie(self, state, wordLengths):
-        trie = Trie()
-        with open('../resources/goodWords.txt', 'r') as f:
-            for line in f:
-                word = line.strip('\n')
-
-                # Skip words that have lengths not of interest
-                if len(word) not in wordLengths:
-                    continue
-
-                stateCounter = Counter(state)
-                wordCounter = Counter(word)
-                stateCounter.subtract(wordCounter)
-
-                # Skip words that cannot be made from the initial state of letters
-                if any(v < 0 for v in stateCounter.values()):
-                    continue
-
-                trie.addWord(word)
-
-        numWords = len(trie.words)
-        logger.info(f'Added {numWords} words to trie')
-        return trie
+    def add_tested_word(self, word):
+        self.tested_words[word] = 1
 
     # Solve the current level
-    def getSolutions(self, state, wordLengths):
+    def get_solutions(self, state, word_lengths):
         # Initialise trie tree
-        self.trie = self.initialiseTrie(state, wordLengths)
+        self.trie = initialise_trie(state, word_lengths)
 
         # Generate all root states
-        initialState = State(state, wordLengths)
-        rootStates = self.getChildStates('pre:', initialState)
+        initial_state = State(state, word_lengths)
+        root_states = self.get_child_states('pre:', initial_state)
 
         # Split root states up evenly to distribute to processes
-        numWorkers = os.cpu_count() - 1
-        splitStates = [rootStates[i::numWorkers] for i in range(numWorkers)]
+        num_workers = os.cpu_count() - 1
+        split_states = [root_states[i::num_workers] for i in range(num_workers)]
 
         # Start workers
-        for i in range(numWorkers):
-            p = Process(target=self.solvingWorker, args=(i, splitStates[i]))
-            p.daemon = True
-            p.start()
-            self.workers.append(p)
+        for i in range(num_workers):
+            process = Process(target=self.solver_worker, args=(i, split_states[i]))
+            process.daemon = True
+            process.start()
+            self.workers.append(process)
 
         # Yield found solutions
-        activeWorkers = numWorkers
+        active_workers = num_workers
         while True:
             # Check for dead workers
             try:
-                workerId = self.deathQueue.get_nowait()
-            except:
+                worker_id = self.death_queue.get_nowait()
+            except queue.Empty:
                 pass
             else:
-                p = self.workers[int(workerId)]
-                p.terminate() and p.join()
-                activeWorkers -= 1
-                logger.info(f'{activeWorkers} workers left!')
+                process = self.workers[int(worker_id)]
+                process.terminate()
+                process.join()
+                active_workers -= 1
+                LOGGER.info(f'{active_workers} workers left!')
 
             # Check for complete solutions
             try:
-                solutionState = self.solutionQueue.get_nowait()
-            except:
+                solution_state = self.solution_queue.get_nowait()
+            except queue.Empty:
                 # If no more solutions and no more workers, exit
-                if activeWorkers == 0:
+                if active_workers == 0:
                     break
             else:
-                if set(solutionState.words).isdisjoint(self.badWords.keys()):
-                    yield solutionState
+                if set(solution_state.words).isdisjoint(self.bad_words.keys()):
+                    yield solution_state
 
             # Check for test solutions
             try:
-                testWord, testState = self.testQueue.get_nowait()
-            except:
+                test_word, test_state = self.test_queue.get_nowait()
+            except queue.Empty:
                 pass
             else:
-                if testWord not in self.testedWords and set(testState.words).isdisjoint(self.badWords.keys()):
-                    yield testState
-                if testWord in self.seenWords:
-                    del self.seenWords[testWord]
+                if test_word not in self.tested_words and set(test_state.words).isdisjoint(self.bad_words.keys()):
+                    yield test_state
+                if test_word in self.seen_words:
+                    del self.seen_words[test_word]
 
     # Worker which solves states and sends solutions to main process
-    def solvingWorker(self, i, stack):
+    def solver_worker(self, i, stack):
         while len(stack) != 0:
             state = stack.pop()
 
             # Check state doesn't contain any bad words
-            if not set(state.words).isdisjoint(self.badWords.keys()):
+            if not set(state.words).isdisjoint(self.bad_words.keys()):
                 continue
 
             # Calculate child states
-            stack.extend(self.getChildStates(i, state))
+            stack.extend(self.get_child_states(i, state))
 
         # Send death message
-        self.deathQueue.put(i)
+        self.death_queue.put(i)
 
     # Generates all child solutions of a root state
-    def getChildStates(self, i, state):
-        childStates = []
-        uniqueStates = set()
-        for path in state.getValidPaths(self.trie):
+    def get_child_states(self, i, state):
+        child_states = []
+        unique_states = set()
+        for path in state.get_valid_paths(self.trie):
             # If the child word already exists, skip over the state
-            childWord = state.getWord(path)
-            if childWord in state.words:
+            child_word = state.get_word(path)
+            if child_word in state.words:
                 continue
 
             # If the child state already exists, skip over the state
-            childState = state.getRemovedPathState(path)
-            if tuple(childState.state) in uniqueStates:
+            child_state = state.get_removed_path_state(path)
+            if tuple(child_state.state) in unique_states:
                 continue
 
             # If there are no more words, we've found a complete solution
-            if len(childState.wordLengths) == 0:
-                self.solutionQueue.put(childState)
+            if len(child_state.word_lengths) == 0:
+                self.solution_queue.put(child_state)
                 continue
 
-            childStates.append(childState)
-            uniqueStates.add(tuple(childState.state))
-            logger.info(f'{i}: {childState.words}')
+            child_states.append(child_state)
+            unique_states.add(tuple(child_state.state))
+            LOGGER.info(f'{i}: {child_state.words}')
 
             # If we're solving a small state, don't bother testing solutions
-            if len(childState.state) <= Solver.SEEN_THRESHOLD:
+            if len(child_state.state) <= Solver.SEEN_THRESHOLD:
                 continue
 
             # If we haven't seen a word before, test it
-            for word in childState.words:
-                if word not in self.seenWords and word not in self.testedWords:
-                    self.seenWords[word] = 1
-                    self.testQueue.put((word, childState))
-                    # logger.info(f'{i}: {word} {childState.words}')
+            for word in child_state.words:
+                if word not in self.seen_words and word not in self.tested_words:
+                    self.seen_words[word] = 1
+                    self.test_queue.put((word, child_state))
+                    # LOGGER.info(f'{i}: {word} {child_state.words}')
                     break
-        return childStates
+        return child_states
