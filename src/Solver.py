@@ -20,21 +20,14 @@ def initialise_trie(state, word_lengths):
     with open('../resources/goodWords.txt', 'r') as word_file:
         for line in word_file:
             word = line.strip('\n')
-
             # Skip words that have lengths not of interest
             if len(word) not in word_lengths:
                 continue
-
-            state_counter = Counter(state)
-            word_counter = Counter(word)
-            state_counter.subtract(word_counter)
-
             # Skip words that cannot be made from the initial state of letters
-            if any(v < 0 for v in state_counter.values()):
+            diff_counter = Counter(state) - Counter(word)
+            if any(v < 0 for v in diff_counter.values()):
                 continue
-
             trie.add_word(word)
-
     num_words = len(trie.words)
     LOGGER.info(f'Added {num_words} words to trie')
     return trie

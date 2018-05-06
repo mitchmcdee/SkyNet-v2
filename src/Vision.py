@@ -4,12 +4,14 @@ from mss import mss
 import cv2
 import pytesseract
 from PIL import Image
+import time
 
-# Get a char from an image and add it to the output queue
 def get_char_from_image(image):
+    '''
+    Returns the first char found within an image.
+    '''
     conf = '-psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return pytesseract.image_to_string(image, config=conf).lower()
-
 
 class Vision:
     # top_left coord %, mid distance x %, mid distance y %, width x %, width y %
@@ -25,235 +27,149 @@ class Vision:
 
     def __init__(self, screenCoords, is_retina):
         self.is_retina = is_retina
-        self.left = screenCoords[0]
-        self.top = screenCoords[1]
-        self.height = screenCoords[3] - screenCoords[1]
-        self.width = screenCoords[2] - screenCoords[0]
+        self.x = screenCoords[0]
+        self.y = screenCoords[1]
+        self.w = screenCoords[2] - screenCoords[0]
+        self.h = screenCoords[3] - screenCoords[1]
         self.capture = mss()
 
-    # Takes a screenshot of the specified region
-    def get_image(self, left, top, width, height):
+    def images_equal(self, image1, image2):
+        picture1 = image1 / 255.0
+        picture2 = image2 / 255.0
+        picture1_norm = picture1/np.sqrt(np.sum(picture1**2))
+        picture2_norm = picture2/np.sqrt(np.sum(picture2**2))
+        return np.sum(picture2_norm*picture1_norm) >= 0.999
+
+    def get_image(self, x, y, w, h):
+        '''
+        Returns a screen shot of the specified region.
+        '''
         if self.is_retina:
-            left /= 2
-            top /= 2
-            width /= 2
-            height /= 2
+            x /= 2
+            y /= 2
+            w /= 2
+            h /= 2
 
-        return self.capture.grab({'left': left, 'top': top, 'width': width, 'height': height})
+        return self.capture.grab({'left': x, 'top': y, 'width': w, 'height': h})
 
-    # Gets board image array
-    def get_board(self):
-        # Compute board coordinates
-        left = self.left
-        top = self.top + int(0.2 * self.height)
-        width = self.width
-        height = int(0.7 * self.height) - int(0.2 * self.height)
-
-        # Get screenshot of game board
-        board = np.array(self.get_image(left, top, width, height))
+    def get_board_image(self):
+        '''
+        Returns an array of the image representing the board.
+        '''
+        x, y, w, h = self.x, int(self.y + 0.17 * self.h), self.w, int(0.58 * self.h)
+        board = np.array(self.get_image(x, y, w, h))
         gray_image = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
-        # Image.fromarray(gray_image).save('../resources/debug/board-' + str(time.time()) + '.png')
-
+        # self.save_debug_image(gray_image, 'board')
         return gray_image
 
-    # Gets board ratio of whiteness
-    def get_board_ratio(self):
-        gray_image = self.get_board()
-        height, width = gray_image.shape
-        # Return total whiteness of the screen
-        ratio = sum([1 if gray_image[y][x] >= 100 else 0
-                     for x in range(0, width, width // 32)
-                     for y in range(0, height, height // 32)])
-        return ratio
+    def get_word_tiles_image(self):
+        '''
+        Returns an array of the image representing the word tiles.
+        '''
+        x, y, w, h = self.x, int(self.y + 0.75 * self.h), self.w, int(0.15 * self.h)
+        board = np.array(self.get_image(x, y, w, h))
+        gray_image = cv2.cvtColor(board, cv2.COLOR_BGRA2GRAY)
+        # self.save_debug_image(gray_image, 'word_tiles')
+        return gray_image
 
     # Gets cell image array
-    def get_cell(self, i, num_boxes):
+    def get_cell_image(self, i, num_boxes):
         # Compute cell coordinates
         col = i % num_boxes
         row = i // num_boxes
         grid = Vision.GRID_CENTRES[num_boxes - 2]
-        top_left = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
-        half_width = int(grid[3] * self.width)
-        left = int((top_left[0] + col * grid[1]) * self.width)
-        top = int((top_left[1] + row * grid[2]) * self.height) + half_width
-        width = half_width * 2
-        height = width
+        top_x = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
+        half_w = int(grid[3] * self.w)
+        x = int((top_x[0] + col * grid[1]) * self.w)
+        y = int((top_x[1] + row * grid[2]) * self.h) + half_w
+        w = half_w * 2
+        h = w
 
         # Get screenshot of cell
-        cell = np.array(self.get_image(left, top, width, height))
+        cell = np.array(self.get_image(x, y, w, h))
         gray_image = cv2.cvtColor(cell, cv2.COLOR_BGRA2GRAY)
-        # Image.fromarray(gray_image).save('../resources/debug/cell-' + str(time.time()) + '.png')
+        # self.save_debug_image(gray_image, 'cell')
 
         return gray_image
 
-    # Gets cell ratio of whiteness
-    def get_cell_ratio(self, i, num_boxes):
-        gray_image = self.get_cell(i, num_boxes)
-        height, width = gray_image.shape
-        # Return total whiteness of the screen
-        ratio = sum([1 if gray_image[y][x] >= 200 else 0
-                     for x in range(0, width, width // 32)
-                     for y in range(0, height, height // 32)])
-        return ratio
+    def save_debug_image(self, image_array, prefix):
+        file_path = f'../resources/debug/{prefix}-{time.time()}.png'
+        Image.fromarray(image_array).save(file_path)
 
-    # Scan first row in grid and return the number of boxes found
-    def get_num_boxes(self, image):
-        num_boxes = 0  # number of boxes in the row
-        black_flag = True  # flag of whether we're currently on black pixels
-        start_y = int(0.19 * self.height)  # height of the first row in the grid
-        for x_coord in range(image.shape[1]):
-            pixel = image[start_y][x_coord]
-            # Check if we've found a white box
-            if pixel >= 200 and black_flag:
-                num_boxes += 1
-                black_flag = False
-            # Check if we've found the end of a grid
-            if pixel < 200 and not black_flag:
-                black_flag = True
-        return num_boxes
-
-    # Get a list of chars from the image
-    def get_chars_from_image(self, image):
-        # Get number of boxes in the grid (along one side)
-        num_boxes = self.get_num_boxes(image)
-
-        # If out of range, return empty list of chars
-        if num_boxes - 2 >= len(Vision.GRID_CENTRES):
-            # print('Number of boxes is out of grid range:', num_boxes)
-            return []
-
-        # Get grid centres and calculate their char widths
-        grid = Vision.GRID_CENTRES[num_boxes - 2]
-        width = int(grid[3] * 2 * self.width)
-
-        # Loop over each box in the grid and get its char_image
-        char_images = []
-        for j in range(num_boxes):
-            for i in range(num_boxes):
-                # Calculate top left coordinate for the current box
-                top_left = [grid[0][0] - grid[3], grid[0][1] - grid[4]]
-                top_left[0] = int((top_left[0] + i * grid[1]) * self.width)
-                top_left[1] = int((top_left[1] + j * grid[2]) * self.height)
-
-                # Get image of char
-                char_image = image[top_left[1]:top_left[1] + width, top_left[0]:top_left[0] + width]
-                # Image.fromarray(char_image).save('../resources/debug/char-' + str(time.time()) + '.png')
-                char_images.append(Image.fromarray(char_image))
-
-        return mp.Pool().map(get_char_from_image, char_images)
-
-    def get_word(self, image, start_x, start_y):
-        # Tracks the last position of the word we're entering
-        last_x = -1
-        # Find starting X and letterbox side_length
-        side_length = None
-        for x_coord in range(start_x, image.shape[1]):
-            last_x = x_coord
-            pixel = image[start_y][x_coord][0]
-            # If black pixel, continue
-            if pixel < 30:
-                continue
-            # White edge was found! Let's look for its right edge
-            low_flag = False
-            for i in range(x_coord, min(image.shape[1], x_coord + int(0.1 * image.shape[1]))):
-                pixel = image[start_y][i][0]
-                # If black pixel, set low flag and continue
-                if pixel < 30 and not low_flag:
-                    low_flag = True
-                    continue
-                # If low flag has been set, we've found a right edge!
-                if pixel >= 30 and low_flag:
-                    side_length = i - x_coord
-                    break
-            break
-
-        # Check we found a side_length
-        if side_length is None:
+    def get_cropped_box(self, image):
+        _, thresh = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV)
+        # Morph-op to remove noise
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11,11))
+        morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        # Find the max-area contour
+        _, contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL,
+                                          cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours) == 0:
             return None
+        max_countour = sorted(contours, key=cv2.contourArea)[-1]
+        bounding_box = cv2.boundingRect(max_countour)
+        return bounding_box
 
-        # Find top edge
-        for y_coord in reversed(range(0, start_y)):
-            # Check if top edge was found
-            if image[y_coord][last_x + side_length // 2][0] >= 30:
-                top_edge = y_coord
-                break
-        else:
-            # Top edge was not found
+    def get_padded_char_box(self, box):
+        x, y, w, h = box
+        padding = 3
+        l = r = (max(w, h) - w) // 2 + padding
+        t = b = (max(w, h) - h) // 2 + padding
+        padded_box = x - l, y - t, w + l + r, h + t + b
+        return padded_box
+
+    def get_cropped_image(self, image, box):
+        x, y, w, h = box
+        cropped_image = image[y:y + h, x: x + w]
+        return cropped_image
+
+    def get_char_image(self, image, box):
+        full_char_image = self.get_cropped_image(image, box)
+        cropped_box = self.get_cropped_box(full_char_image)
+        if cropped_box is None:
             return None
+        padded_box = self.get_padded_char_box(cropped_box)
+        cropped_char_image = self.get_cropped_image(full_char_image, padded_box)
+        char_image = Image.fromarray(cropped_char_image)
+        return char_image
 
-        # Count number of letters
-        word_length = 0
-        last_x += side_length // 2
-        while last_x < image.shape[1]:
-            # If black pixel, end of word
-            if image[top_edge][last_x][0] < 30:
-                break
+    def get_grid_boxes(self, image, threshold_val, hierarchy_index):
+        _, thresh = cv2.threshold(image, threshold_val, 255, cv2.THRESH_BINARY)
+        self.save_debug_image(thresh, 'idk')
+        _, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
+                                                  cv2.CHAIN_APPROX_SIMPLE)
+        contours = [c for i, c in enumerate(contours)
+                    if hierarchy[0, i, hierarchy_index] == -1]
+        boxes = [cv2.boundingRect(c) for c in contours]
+        boxes = [(x, y, w, h) for x, y, w, h in boxes
+                 if abs(w - h) <= min(w, h) // 2]
+        boxes.sort(key=lambda box: (box[1], box[0]))
+        return boxes
 
-            # Otherwise, increment word
-            word_length += 1
-            # print(word_length, last_x, side_length)
+    def get_board_chars(self):
+        board_image = self.get_board_image()
+        board_grid_boxes = self.get_grid_boxes(board_image, 127, 3)
+        char_images = [self.get_char_image(board_image, box)
+                       for box in board_grid_boxes]
+        if any(image is None for image in char_images):
+            return None
+        chars = mp.Pool().map(get_char_from_image, char_images)
+        return chars
 
-            # Find left edge of current letterbox
-            for i in reversed(range(last_x - side_length, last_x)):
-                if image[start_y][i][0] >= 30:
-                    break
-
-            # Jump into next char
-            last_x = int(i + side_length * (3 / 2))
-
-        # Return word length and its final check position
-        return word_length, last_x, int(top_edge + side_length * (3 / 2))
-
-    # Get a list of word lengths from the image
-    def get_word_lengths_from_image(self, image, chars):
-        top = int(0.74 * self.height)
-        bottom = int(0.90 * self.height)
-        cropped_image = image[top:bottom, :]
-
-        start_x = 0  # Should be a valid x position for start of row
-        start_y = 0  # Should be a valid y position for start of row
-        height_jump = int(0.15 * cropped_image.shape[0])  # Should be a valid y jump
-
-        # First level has "Words to find" text in the way, this catches it
-        if len(chars) == 4:
-            start_y = int(0.25 * cropped_image.shape[0])
-
+    def get_board_word_lengths(self):
+        word_tiles_image = self.get_word_tiles_image()
+        word_tiles_grid_boxes = self.get_grid_boxes(word_tiles_image, 50, 2)
+        prev_x = prev_y = delta_x = delta_y = None
         words = []
-        while start_y < cropped_image.shape[0]:
-            result = self.get_word(cropped_image, start_x, start_y)
-            # print(result, start_x, start_y, height_jump)
+        word_length = 0
+        for i, (x, y, w, h) in enumerate(word_tiles_grid_boxes):
+            if i != 0 and (x >= prev_x + delta_x or y >= prev_y + delta_y):
+                words.append(word_length)
+                word_length = 0
+            word_length += 1
+            prev_x, prev_y, delta_x, delta_y = x, y, max(w, h) * 1.5, max(w, h) * 0.1
+        return words + [word_length]
 
-            # If no words were found or we've read all we can from this row, go into next row
-            if result is None or result[1] >= cropped_image.shape[1]:
-                start_y += height_jump
-                start_x = 0
-                continue
-
-            word_length, end_x, end_y = result
-            words.append(word_length)
-            height_jump = end_y - start_y
-            start_x = end_x
-
-        return words
-
-    # Get board state from the current screen
-    def get_board_state(self):
-        # Get screenshot of game state
-        screen = self.get_image(self.left, self.top, self.width, self.height)
-        image = cv2.cvtColor(np.array(screen), cv2.COLOR_BGRA2RGB)
-        # Image.fromarray(image).save('../resources/debug/screen-' + str(time.time()) + '.png')
-
-        # Convert image to grayscale
-        gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        # Image.fromarray(gray_image).save('../resources/debug/gray-' + str(time.time()) + '.png')
-
-        # Get a list of chars from the board state
-        chars = self.get_chars_from_image(gray_image)
-        if chars == []:
-            return [], []
-
-        # Get a list of word lengths
-        words = self.get_word_lengths_from_image(image, chars)
-
-        # Return state
-        return chars, words
+    # Get level's starting state from the current screen
+    def get_level_starting_state(self):
+        return self.get_board_chars(), self.get_board_word_lengths()

@@ -6,6 +6,8 @@ import numpy as np
 from solver import Solver
 from vision import Vision
 from screen import Screen
+from random import randint, random
+from PIL import Image
 
 LOGGER = logging.getLogger(__name__)
 HANDLER = logging.FileHandler('solutions.log')
@@ -16,20 +18,25 @@ LOGGER.setLevel(logging.INFO)
 
 pyautogui.FAILSAFE = True           # Allows exiting the program by moving mouse to top left of screen
 IS_RETINA = True                    # Mitch has a macbook
-SCREEN_COORDS = [0, 46, 730, 1290]  # Mitch's screen coords
+SCREEN_COORDS = [0, 50, 720, 1280]  # Mitch's screen coords
 
 class SkyNet:
     def __init__(self):
         self.vision = Vision(SCREEN_COORDS, IS_RETINA)
-        self.screen = Screen()
+        # self.screen = Screen()
+
+    def moveWithRandom(self, x, y, pause):
+        pyautogui.moveTo(x, y, pause=pause)
+        pyautogui.moveRel(randint(0, 5), randint(0, 5), pause=0)
+        pyautogui.mouseDown(pause=0)
 
     # Waits until all animations on board have stopped
     def wait_for_animation(self):
         while True:
-            board_before = self.vision.get_board()
+            board_before = self.vision.get_board_image()
             time.sleep(0.1)
-            board_after = self.vision.get_board()
-            if np.array_equal(board_before, board_after):
+            board_after = self.vision.get_board_image()
+            if self.vision.images_equal(board_before, board_after):
                 break
 
     # Enters the given word onto the board
@@ -37,29 +44,36 @@ class SkyNet:
         # Wait for animations to stop, necessary for computing board ratio
         self.wait_for_animation()
 
-        # board ratio before entering word
-        start = self.vision.get_board_ratio()
+        # board before entering word
+        board_before = self.vision.get_board_image()
 
         # Move over each letter
         for i, letter in enumerate(word):
-            cell_before = self.vision.get_cell(path[i], width)
+            cell_before = self.vision.get_cell_image(path[i], width)
             cell_after = cell_before
-            while np.array_equal(cell_after, cell_before):
-                pyautogui.moveTo(*letter, pause=0)
-                pyautogui.mouseDown(pause=0)
-                cell_after = self.vision.get_cell(path[i], width)
-        pyautogui.mouseUp(pause=0)
+            start_time = time.time()
+            not_equal_count = 0
+            while not_equal_count < 3:
+                not_equal_count += not self.vision.images_equal(cell_after, cell_before)
+                # Check if we got stuck
+                if (time.time() - start_time) >= 3:
+                    print('got stuck!')
+                    return None
+                self.moveWithRandom(*letter, pause=0)
+                cell_after = self.vision.get_cell_image(path[i], width)
+        pyautogui.mouseUp(pause=0.1)
 
         # Wait for animations to stop, necessary for computing board ratio
         self.wait_for_animation()
 
         # Return true if entered word was valid (board states were different), else false
-        return start != self.vision.get_board_ratio()
+        board_after = self.vision.get_board_image()
+        return not self.vision.images_equal(board_before, board_after)
 
     # Click the button at the given relative width and height
     def click_button(self, width_percentage, height_percentage):
-        width = width_percentage * self.vision.width
-        height = height_percentage * self.vision.height
+        width = width_percentage * self.vision.w
+        height = height_percentage * self.vision.h
         # if on retina display, halve the mouse resolution due to scaling
         if IS_RETINA:
             width /= 2
@@ -71,12 +85,11 @@ class SkyNet:
     # Resets the game board and exits any ads on screen
     def reset_board(self):
         while True:
-            board_before = self.vision.get_board_ratio()
+            board_before = self.vision.get_board_image()
             self.click_button(*self.vision.AD_BUTTON)
             self.click_button(*self.vision.RESET_BUTTON)
-            self.click_button(SCREEN_COORDS[0] / self.vision.width, SCREEN_COORDS[1] / self.vision.height)
-            time.sleep(0.3)
-            if board_before != self.vision.get_board_ratio():
+            time.sleep(0.2)
+            if not self.vision.images_equal(board_before, self.vision.get_board_image()):
                 self.wait_for_animation()
                 break
 
@@ -86,8 +99,8 @@ class SkyNet:
         mouse_grid = []
         for j in range(width):
             for i in range(width):
-                col = int((grid[0][0] + i * grid[1]) * self.vision.width)
-                row = int((grid[0][1] + j * grid[2]) * self.vision.height) + SCREEN_COORDS[1]
+                col = int((grid[0][0] + i * grid[1]) * self.vision.w)
+                row = int((grid[0][1] + j * grid[2]) * self.vision.h) + SCREEN_COORDS[1]
                 # if on retina display, halve the mouse resolution due to scaling
                 if IS_RETINA:
                     col /= 2
@@ -95,14 +108,21 @@ class SkyNet:
                 mouse_grid.append((col, row))
         return mouse_grid
 
+    def is_valid_state(self, chars, word_lengths):
+        if chars is None or word_lengths is None:
+            return False
+        width = int(sqrt(len(chars)))
+        return width is not None and width != 0 and width ** 2 == len(chars) \
+               and len(chars) == sum(word_lengths) and len(chars) >= 4
+
     # Runs SkyNet
     def run(self):
         # Wait for screen to become responsive (anrdoid emulator? osx? idek lol)
         self.reset_board()
         # Play the game!
         while True:
-            # Clear screen
-            self.screen.clear()
+            # # Clear screen
+            # self.screen.clear()
             # Wait for any lingering animations
             self.wait_for_animation()
 
@@ -110,15 +130,16 @@ class SkyNet:
             # word_lengths = [7, 6, 7, 4, 4, 3, 5]
 
             # Get level state and word lengths required
-            state, word_lengths = self.vision.get_board_state()
-            width = int(sqrt(len(state)))
-            LOGGER.info(f'{state} {word_lengths}')
+            chars, word_lengths = self.vision.get_level_starting_state()
+            print(chars, word_lengths)
 
-            # Check state is reasonable
-            if width == 0 or width ** 2 != len(state) or len(state) != sum(word_lengths) or len(state) < 4:
+            # Check valid state
+            if not self.is_valid_state(chars, word_lengths):
                 LOGGER.info('Invalid state, resetting')
                 self.reset_board()
                 continue
+
+            width = int(sqrt(len(chars)))
 
             # Generate mouse grid
             mouse_grid = self.generate_mouse_grid(width)
@@ -126,7 +147,7 @@ class SkyNet:
             start_time = time.time()
             # Loop over valid solutions to try them all
             with Solver() as solver:
-                for solution in solver.get_solutions(state, word_lengths):
+                for solution in solver.get_solutions(chars, word_lengths):
                     # Compute time it took to find a solution
                     solution_time = str(round(time.time() - start_time, 2))
                     LOGGER.info(f'{solution_time}s - Testing: {solution.words}')
@@ -138,11 +159,18 @@ class SkyNet:
                         word = ''.join([solution.all_states[i][j] for j in path])
                         LOGGER.info(f'entering {word}')
                         solver.add_tested_word(word)
-                        # If the same ratio, the word entered was a bad one, so remove it from all solutions
-                        is_valid = self.enter_word([mouse_grid[i] for i in path], path, width)
-                        if not is_valid:
-                            solver.add_bad_word(word)
-                            LOGGER.info(f'added {word} as a bad word')
+                        was_bad_word = False
+                        while True:
+                            is_valid = self.enter_word([mouse_grid[i] for i in path], path, width)
+                            # If the same ratio, the word entered was a bad one, so remove it from all solutions
+                            if is_valid is False:
+                                solver.add_bad_word(word)
+                                LOGGER.info(f'added {word} as a bad word')
+                                was_bad_word = True
+                                break
+                            elif is_valid is True:
+                                break
+                        if was_bad_word:
                             break
                     # Else if no break, all words in solution were entered, exit out of entering solutions
                     else:

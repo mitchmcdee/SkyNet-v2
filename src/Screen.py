@@ -37,6 +37,7 @@ def tail(file, lines=1, _buffer=4098):
 
     return lines_found[-lines:]
 
+# TODO(mitch): fix this API to reflect writing to screen instead of calling update
 class Screen:
     # Number of characters to pad borders by
     BORDER_PADDING = 1
